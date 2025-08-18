@@ -20,12 +20,28 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <!-- Command Deck Page (Always Visible) -->
-    <div id="roster-app-page" class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-8 space-y-8">
+    <!-- Login Page -->
+    <div id="login-page" class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-8 space-y-8 text-center">
+        <h1 class="text-4xl font-bold text-gray-800">Welcome to Command Deck</h1>
+        <p class="mt-2 text-lg text-gray-600">Sign in to access your personal roster.</p>
+        <button id="anon-login-btn" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition-colors text-xl">
+            Sign In Anonymously
+        </button>
+    </div>
+
+    <!-- Command Deck Page (Initially Hidden) -->
+    <div id="roster-app-page" class="hidden bg-white rounded-2xl shadow-xl w-full max-w-4xl p-8 space-y-8">
         <header class="text-center">
             <h1 id="command-deck-title" class="text-4xl font-bold text-gray-800">Command Deck</h1>
             <p class="mt-2 text-lg text-gray-600">Organize your units and track point limits.</p>
         </header>
+        
+        <div class="flex justify-between items-center">
+            <div class="text-sm text-gray-600">Your User ID: <span id="user-id" class="font-mono text-gray-800"></span></div>
+            <button id="sign-out-btn" class="px-6 py-3 bg-gray-500 text-white font-semibold rounded-xl shadow-lg hover:bg-gray-600 transition-colors">
+                Sign Out
+            </button>
+        </div>
 
         <!-- Control Buttons -->
         <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -109,7 +125,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // Your Firebase project configuration
         // !!! IMPORTANT: Replace this with your actual Firebase config !!!
@@ -124,12 +141,14 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         // --- DOM Element References ---
-        const playerSelectionPage = document.getElementById('player-selection-page');
+        const loginPage = document.getElementById('login-page');
         const rosterAppPage = document.getElementById('roster-app-page');
-        const playerSelectBtns = document.querySelectorAll('.player-select-btn');
-        const backToSelectBtn = document.getElementById('back-to-select');
+        const anonLoginBtn = document.getElementById('anon-login-btn');
+        const signOutBtn = document.getElementById('sign-out-btn');
+        const userIdSpan = document.getElementById('user-id');
         
         const addBattleshipBtn = document.getElementById('add-battleship');
         const addHeavyCruiserBtn = document.getElementById('add-heavy-cruiser');
@@ -154,7 +173,7 @@
         // --- Core Data Model ---
         let groups = [];
         let nextGroupId = 0;
-        let currentPlayerColor = null;
+        let currentPlayerId = null;
 
         // Re-structured units data with factions and chapters.
         const factionsData = {
@@ -306,14 +325,12 @@
             messageBox.classList.add('hidden');
         }
 
-        // Save the groups data to Firestore for the current player
         async function saveGroups(playerColor) {
             if (!playerColor) return;
             const playerDocRef = doc(db, "playerRosters", playerColor);
             await setDoc(playerDocRef, { groups: groups });
         }
 
-        // Load the groups data from Firestore for the selected player
         function loadGroups(playerColor) {
             if (!playerColor) return;
             const playerDocRef = doc(db, "playerRosters", playerColor);
@@ -412,7 +429,7 @@
                 detachment: '',
             };
             groups.push(newGroup);
-            saveGroups(currentPlayerColor);
+            saveGroups(currentPlayerId);
             renderUI();
         }
 
@@ -420,7 +437,7 @@
             const group = groups.find(g => g.id === parseInt(groupId));
             if (group) {
                 group.name = newName;
-                saveGroups(currentPlayerColor);
+                saveGroups(currentPlayerId);
                 renderUI();
             }
         }
@@ -444,7 +461,7 @@
             group.units.push(newUnit);
             group.pointsUsed += unitCost;
             
-            saveGroups(currentPlayerColor);
+            saveGroups(currentPlayerId);
             renderUI();
         }
 
@@ -458,7 +475,7 @@
             const unitCost = group.units[unitIndex].cost;
             group.units.splice(unitIndex, 1);
             group.pointsUsed -= unitCost;
-            saveGroups(currentPlayerColor);
+            saveGroups(currentPlayerId);
             renderUI();
         }
 
@@ -472,7 +489,7 @@
             const fallenUnit = group.units.splice(unitIndex, 1)[0];
             group.fallenUnits.push(fallenUnit);
             group.pointsUsed -= fallenUnit.cost;
-            saveGroups(currentPlayerColor);
+            saveGroups(currentPlayerId);
             renderUI();
         }
 
@@ -648,35 +665,33 @@
         }
 
         // --- Event Listeners ---
-        playerSelectBtns.forEach(button => {
-            button.addEventListener('click', (e) => {
-                currentPlayerColor = e.target.dataset.color;
-                loadGroups(currentPlayerColor);
-                playerSelectionPage.classList.add('hidden');
-                rosterAppPage.classList.remove('hidden');
-                // Set the title color based on the selected color
-                const colorClasses = {
-                    'blue': 'text-blue-600',
-                    'red': 'text-red-600',
-                    'green': 'text-green-600',
-                    'yellow': 'text-yellow-500',
-                    'orange': 'text-orange-500',
-                    'pink': 'text-pink-500',
-                    'purple': 'text-purple-600',
-                    'white': 'text-gray-800'
-                };
-                commandDeckTitle.className = `text-4xl font-bold ${colorClasses[currentPlayerColor]}`;
-                renderUI();
-            });
+        anonLoginBtn.addEventListener('click', () => {
+            signInAnonymously(auth)
+                .then((userCredential) => {
+                    currentPlayerId = userCredential.user.uid;
+                    loginPage.classList.add('hidden');
+                    rosterAppPage.classList.remove('hidden');
+                    userIdSpan.textContent = currentPlayerId;
+                    loadGroups(currentPlayerId);
+                })
+                .catch((error) => {
+                    showMessage(`Login failed: ${error.message}`);
+                });
         });
 
-        backToSelectBtn.addEventListener('click', () => {
-            rosterAppPage.classList.add('hidden');
-            playerSelectionPage.classList.remove('hidden');
-            groups = []; // Clear the current player's data from memory when they go back
-            currentPlayerColor = null;
+        signOutBtn.addEventListener('click', () => {
+            signOut(auth)
+                .then(() => {
+                    groups = [];
+                    currentPlayerId = null;
+                    rosterAppPage.classList.add('hidden');
+                    loginPage.classList.remove('hidden');
+                    renderUI();
+                })
+                .catch((error) => {
+                    showMessage(`Logout failed: ${error.message}`);
+                });
         });
-
 
         groupSelect.addEventListener('change', () => {
             const selectedGroupId = groupSelect.value;
@@ -694,7 +709,7 @@
                 const group = groups.find(g => g.id === parseInt(selectedGroupId));
                 if (group) {
                     group.detachment = selectedDetachment;
-                    saveGroups(currentPlayerColor);
+                    saveGroups(currentPlayerId);
                     renderUI();
                 }
             }
@@ -781,8 +796,20 @@
         });
 
         closeMessageBtn.addEventListener('click', closeMessage);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentPlayerId = user.uid;
+                userIdSpan.textContent = currentPlayerId;
+                loginPage.classList.add('hidden');
+                rosterAppPage.classList.remove('hidden');
+                loadGroups(currentPlayerId);
+            } else {
+                loginPage.classList.remove('hidden');
+                rosterAppPage.classList.add('hidden');
+            }
+        });
         
-        // Initial render and dropdown population
         populateFactionSelect();
         populateDetachmentSelect();
         populateUnitSelect();
