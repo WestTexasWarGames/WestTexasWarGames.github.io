@@ -141,7 +141,6 @@
 
         // Your Firebase project configuration
         // !!! IMPORTANT: Replace this with your actual Firebase config !!!
-        
         const firebaseConfig = {
   apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
   authDomain: "conquest-command-deck.firebaseapp.com",
@@ -509,6 +508,17 @@
             renderUI();
         }
 
+        function deleteFallenUnit(groupId, unitIndex) {
+            const group = groups.find(g => g.id === parseInt(groupId));
+            if (!group || !group.fallenUnits[unitIndex]) {
+                showMessage("Error: Fallen unit or group not found.");
+                return;
+            }
+            group.fallenUnits.splice(unitIndex, 1);
+            saveGroups(currentPlayerId);
+            renderUI();
+        }
+
         function renderUI() {
             const selectedGroupId = groupSelect.value;
             const selectedFaction = factionSelect.value;
@@ -597,10 +607,17 @@
                 if (group.fallenUnits.length === 0) {
                     fallenList.innerHTML = '<li class="text-gray-400 italic text-sm">None have fallen yet.</li>';
                 } else {
-                    group.fallenUnits.forEach(unit => {
+                    group.fallenUnits.forEach((unit, index) => { // Added index here
                         const fallenItem = document.createElement('li');
                         fallenItem.className = 'flex items-center justify-between text-red-400 text-sm py-1 border-b border-gray-100 last:border-b-0';
-                        fallenItem.textContent = `${unit.name} (${unit.cost} pts)`;
+                        fallenItem.innerHTML = `
+                            <span>${unit.name} (${unit.cost} pts)</span>
+                            <button class="delete-fallen-btn text-gray-400 hover:text-red-700 transition-colors" data-group-id="${group.id}" data-unit-index="${index}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 112 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        `;
                         fallenList.appendChild(fallenItem);
                     });
                 }
@@ -639,6 +656,14 @@
                     } else if (action === 'fall') {
                         moveUnitToFallen(groupId, unitIndex);
                     }
+                });
+            });
+
+            document.querySelectorAll('.delete-fallen-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const groupId = e.currentTarget.getAttribute('data-group-id');
+                    const unitIndex = e.currentTarget.getAttribute('data-unit-index');
+                    deleteFallenUnit(groupId, unitIndex);
                 });
             });
             
@@ -855,4 +880,3 @@
     </script>
 </body>
 </html>
-
