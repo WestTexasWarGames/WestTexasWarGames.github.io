@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unit Roster App</title>
+    <title>Command Deck</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inter font -->
@@ -13,21 +13,41 @@
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <!-- Main Container -->
-    <div id="app-container" class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-8 space-y-8">
+    <!-- Player Selection Page -->
+    <div id="player-selection-page" class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-8 space-y-8 text-center">
+        <h1 class="text-4xl font-bold text-gray-800">Select Your Command Deck</h1>
+        <p class="mt-2 text-lg text-gray-600">Choose a color to begin building your roster.</p>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
+            <button class="player-select-btn bg-blue-600 text-white font-semibold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition-colors text-xl" data-color="blue">Blue</button>
+            <button class="player-select-btn bg-red-600 text-white font-semibold py-4 rounded-xl shadow-lg hover:bg-red-700 transition-colors text-xl" data-color="red">Red</button>
+            <button class="player-select-btn bg-green-600 text-white font-semibold py-4 rounded-xl shadow-lg hover:bg-green-700 transition-colors text-xl" data-color="green">Green</button>
+            <button class="player-select-btn bg-yellow-500 text-white font-semibold py-4 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors text-xl" data-color="yellow">Yellow</button>
+            <button class="player-select-btn bg-orange-500 text-white font-semibold py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors text-xl" data-color="orange">Orange</button>
+            <button class="player-select-btn bg-pink-500 text-white font-semibold py-4 rounded-xl shadow-lg hover:bg-pink-600 transition-colors text-xl" data-color="pink">Pink</button>
+            <button class="player-select-btn bg-purple-600 text-white font-semibold py-4 rounded-xl shadow-lg hover:bg-purple-700 transition-colors text-xl" data-color="purple">Purple</button>
+            <button class="player-select-btn bg-gray-300 text-gray-800 font-semibold py-4 rounded-xl shadow-lg hover:bg-gray-400 transition-colors text-xl" data-color="white">White</button>
+        </div>
+    </div>
+
+    <!-- Command Deck Page (Initially Hidden) -->
+    <div id="roster-app-page" class="hidden bg-white rounded-2xl shadow-xl w-full max-w-4xl p-8 space-y-8">
         <header class="text-center">
             <h1 id="command-deck-title" class="text-4xl font-bold text-gray-800">Command Deck</h1>
             <p class="mt-2 text-lg text-gray-600">Organize your units and track point limits.</p>
         </header>
         
         <div class="flex justify-center">
-            <a href="player_selection.html" class="px-6 py-3 bg-gray-500 text-white font-semibold rounded-xl shadow-lg hover:bg-gray-600 transition-colors">
+            <button id="back-to-select" class="px-6 py-3 bg-gray-500 text-white font-semibold rounded-xl shadow-lg hover:bg-gray-600 transition-colors">
                 &larr; Back to Player Select
-            </a>
+            </button>
         </div>
 
         <!-- Control Buttons -->
@@ -115,6 +135,11 @@
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- DOM Element References ---
+            const playerSelectionPage = document.getElementById('player-selection-page');
+            const rosterAppPage = document.getElementById('roster-app-page');
+            const playerSelectBtns = document.querySelectorAll('.player-select-btn');
+            const backToSelectBtn = document.getElementById('back-to-select');
+            
             const addBattleshipBtn = document.getElementById('add-battleship');
             const addHeavyCruiserBtn = document.getElementById('add-heavy-cruiser');
             const addCruiserBtn = document.getElementById('add-cruiser');
@@ -560,195 +585,4 @@
                         if (action === 'delete') {
                             deleteUnit(groupId, unitIndex);
                         } else if (action === 'fall') {
-                            moveUnitToFallen(groupId, unitIndex);
-                        }
-                    });
-                });
-                
-                document.querySelectorAll('.edit-name-btn').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const groupId = e.currentTarget.previousElementSibling.getAttribute('data-group-id');
-                        const groupNameElement = e.currentTarget.previousElementSibling;
-                        
-                        const currentName = groupNameElement.textContent;
-                        
-                        const inputField = document.createElement('input');
-                        inputField.type = 'text';
-                        inputField.value = currentName;
-                        inputField.className = 'text-2xl font-bold text-gray-800 bg-gray-100 rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-indigo-500';
-
-                        const saveButton = document.createElement('button');
-                        saveButton.textContent = 'Save';
-                        saveButton.className = 'ml-2 px-3 py-1 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600';
-
-                        const cancelButton = document.createElement('button');
-                        cancelButton.textContent = 'Cancel';
-                        cancelButton.className = 'ml-2 px-3 py-1 bg-gray-300 text-gray-800 rounded-xl hover:bg-gray-400';
-
-                        const parentDiv = groupNameElement.parentNode;
-                        parentDiv.replaceChild(inputField, groupNameElement);
-                        parentDiv.replaceChild(saveButton, e.currentTarget);
-                        parentDiv.appendChild(cancelButton);
-
-                        inputField.focus();
-
-                        saveButton.addEventListener('click', () => {
-                            editGroupName(groupId, inputField.value);
-                        });
-                        
-                        cancelButton.addEventListener('click', () => {
-                            renderUI();
-                        });
-                    });
-                });
-            }
-
-            // --- Event Listeners ---
-
-            groupSelect.addEventListener('change', () => {
-                const selectedGroupId = groupSelect.value;
-                const selectedGroup = groups.find(g => g.id === parseInt(selectedGroupId));
-                if (selectedGroup) {
-                    detachmentSelect.value = selectedGroup.detachment;
-                }
-            });
-
-            detachmentSelect.addEventListener('change', (e) => {
-                const selectedDetachment = e.target.value;
-                
-                const selectedGroupId = groupSelect.value;
-                if (selectedGroupId) {
-                    const group = groups.find(g => g.id === parseInt(selectedGroupId));
-                    if (group) {
-                        group.detachment = selectedDetachment;
-                        renderUI();
-                    }
-                }
-            });
-            
-            factionSelect.addEventListener('change', (e) => {
-                const selectedFaction = e.target.value;
-                if (selectedFaction === "Adeptus Astartes") {
-                    chapterSelectContainer.classList.remove('hidden');
-                    populateChapterSelect();
-                } else {
-                    chapterSelectContainer.classList.add('hidden');
-                }
-                populateDetachmentSelect(selectedFaction);
-                populateUnitSelect(selectedFaction);
-            });
-            
-            chapterSelect.addEventListener('change', (e) => {
-                const selectedFaction = factionSelect.value;
-                const selectedChapter = e.target.value;
-                populateUnitSelect(selectedFaction, selectedChapter);
-            });
-
-            addBattleshipBtn.addEventListener('click', () => {
-                addGroup('Battleship', 1500);
-            });
-
-            addHeavyCruiserBtn.addEventListener('click', () => {
-                addGroup('Heavy Cruiser', 1000);
-            });
-
-            addCruiserBtn.addEventListener('click', () => {
-                addGroup('Cruiser', 500);
-            });
-            
-            addBluePlanetBtn.addEventListener('click', () => {
-                addGroup('Blue Planet', 1500);
-            });
-
-            addRedPlanetBtn.addEventListener('click', () => {
-                addGroup('Red Planet', 1000);
-            });
-
-            addGoldPlanetBtn.addEventListener('click', () => {
-                addGroup('Gold Planet', 500);
-            });
-
-            addUnitForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-
-                const selectedGroupId = groupSelect.value;
-                const selectedFaction = factionSelect.value;
-                const selectedChapter = chapterSelect.value;
-                const selectedUnitOption = unitSelect.options[unitSelect.selectedIndex];
-                
-                if (!selectedGroupId) {
-                    showMessage("Please select a muster point first.");
-                    return;
-                }
-                if (!selectedUnitOption || selectedUnitOption.value === "") {
-                    showMessage("Please select a unit to add.");
-                    return;
-                }
-                
-                const group = groups.find(g => g.id === parseInt(selectedGroupId));
-                const unitName = selectedUnitOption.textContent;
-                const unitCost = parseInt(selectedUnitOption.dataset.cost, 10);
-
-                if (group.pointsUsed + unitCost > group.pointLimit) {
-                    showMessage(`Cannot add unit. Adding ${unitCost} points would exceed the group's limit of ${group.pointLimit}.`);
-                    return;
-                }
-                
-                addUnit(selectedGroupId, unitName, unitCost);
-
-                // Reset Unit dropdown after a unit is added
-                unitSelect.value = "";
-                
-                // Keep the last selected Faction and Chapter
-                factionSelect.value = selectedFaction;
-                if (selectedFaction === "Adeptus Astartes") {
-                    chapterSelect.value = selectedChapter;
-                }
-            });
-
-            closeMessageBtn.addEventListener('click', closeMessage);
-
-            // Get the color from the URL parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const color = urlParams.get('color');
-            if (color) {
-                // Set the title color. Using a switch statement for specific colors
-                switch (color) {
-                    case 'blue':
-                        commandDeckTitle.className = 'text-4xl font-bold text-blue-600';
-                        break;
-                    case 'red':
-                        commandDeckTitle.className = 'text-4xl font-bold text-red-600';
-                        break;
-                    case 'green':
-                        commandDeckTitle.className = 'text-4xl font-bold text-green-600';
-                        break;
-                    case 'yellow':
-                        commandDeckTitle.className = 'text-4xl font-bold text-yellow-500';
-                        break;
-                    case 'orange':
-                        commandDeckTitle.className = 'text-4xl font-bold text-orange-500';
-                        break;
-                    case 'pink':
-                        commandDeckTitle.className = 'text-4xl font-bold text-pink-500';
-                        break;
-                    case 'purple':
-                        commandDeckTitle.className = 'text-4xl font-bold text-purple-600';
-                        break;
-                    case 'white':
-                        commandDeckTitle.className = 'text-4xl font-bold text-gray-800'; // Or another suitable dark color
-                        break;
-                    default:
-                        commandDeckTitle.className = 'text-4xl font-bold text-gray-800';
-                }
-            }
-            
-            renderUI();
-            populateFactionSelect();
-            populateDetachmentSelect();
-            populateUnitSelect();
-        });
-    </script>
-
-</body>
-</html>
+                            moveUnitToFallen(groupId, unitInde
