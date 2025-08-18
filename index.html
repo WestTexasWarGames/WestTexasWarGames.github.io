@@ -670,11 +670,13 @@
             unitSelect.innerHTML = '<option value="" disabled selected>Select a unit...</option>';
             
             let units = [];
-            if (factionName === "Adeptus Astartes" && chapterName) {
-                // For Adeptus Astartes, get units from the selected chapter
-                units = factionsData[factionName][chapterName] || [];
+            if (factionName === "Adeptus Astartes") {
+                if (chapterName && factionsData[factionName][chapterName]) {
+                    units = factionsData[factionName][chapterName].concat(factionsData[factionName]["general"] || []);
+                } else {
+                    units = factionsData[factionName]["general"] || [];
+                }
             } else if (factionsData[factionName] && Array.isArray(factionsData[factionName])) {
-                // For other factions, get units directly from the array
                 units = factionsData[factionName];
             }
 
