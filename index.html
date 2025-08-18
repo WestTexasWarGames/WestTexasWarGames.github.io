@@ -776,6 +776,15 @@
             renderUI();
         }
 
+        function deleteGroup(groupId) {
+            const groupIndex = groups.findIndex(g => g.id === parseInt(groupId));
+            if (groupIndex !== -1) {
+                groups.splice(groupIndex, 1);
+                saveGroups(currentPlayerId);
+                renderUI();
+            }
+        }
+
         function renderUI() {
             const selectedGroupId = groupSelect.value;
             const selectedFaction = factionSelect.value;
@@ -967,6 +976,13 @@
                     });
                 });
             });
+
+            document.querySelectorAll('.delete-group-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const groupId = e.currentTarget.getAttribute('data-group-id');
+                    deleteGroup(groupId);
+                });
+            });
         }
 
         // --- Event Listeners ---
@@ -1141,6 +1157,7 @@
         populateFactionSelect();
         populateDetachmentSelect();
         populateUnitSelect();
+    });
     </script>
 </body>
 </html>
