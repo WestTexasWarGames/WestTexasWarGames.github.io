@@ -683,16 +683,16 @@
             const email = emailInput.value;
             const password = passwordInput.value;
             if (!email || !password) {
-                authMessage.textContent = "Please enter an email and password.";
+                showMessage("Please enter an email and password.");
                 return;
             }
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    authMessage.textContent = "Registration successful! You are now signed in.";
+                    showMessage("Registration successful! You are now signed in.");
                     // User is automatically signed in after creation
                 })
                 .catch((error) => {
-                    authMessage.textContent = error.message;
+                    showMessage(error.message);
                 });
         });
 
@@ -700,16 +700,16 @@
             const email = emailInput.value;
             const password = passwordInput.value;
             if (!email || !password) {
-                authMessage.textContent = "Please enter an email and password.";
+                showMessage("Please enter an email and password.");
                 return;
             }
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    authMessage.textContent = "Sign in successful!";
+                    showMessage("Sign in successful!");
                     // User is automatically signed in
                 })
                 .catch((error) => {
-                    authMessage.textContent = error.message;
+                    showMessage(error.message);
                 });
         });
 
