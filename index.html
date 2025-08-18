@@ -629,6 +629,31 @@
             }
 
             // --- Event Listeners ---
+            playerSelectBtns.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const color = e.target.dataset.color;
+                    playerSelectionPage.classList.add('hidden');
+                    rosterAppPage.classList.remove('hidden');
+                    // Set the title color based on the selected color
+                    const colorClasses = {
+                        'blue': 'text-blue-600',
+                        'red': 'text-red-600',
+                        'green': 'text-green-600',
+                        'yellow': 'text-yellow-500',
+                        'orange': 'text-orange-500',
+                        'pink': 'text-pink-500',
+                        'purple': 'text-purple-600',
+                        'white': 'text-gray-800'
+                    };
+                    commandDeckTitle.className = `text-4xl font-bold ${colorClasses[color]}`;
+                });
+            });
+
+            backToSelectBtn.addEventListener('click', () => {
+                rosterAppPage.classList.add('hidden');
+                playerSelectionPage.classList.remove('hidden');
+            });
+
 
             groupSelect.addEventListener('change', () => {
                 const selectedGroupId = groupSelect.value;
@@ -732,43 +757,8 @@
             });
 
             closeMessageBtn.addEventListener('click', closeMessage);
-
-            // Get the color from the URL parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const color = urlParams.get('color');
-            if (color) {
-                // Set the title color. Using a switch statement for specific colors
-                switch (color) {
-                    case 'blue':
-                        commandDeckTitle.className = 'text-4xl font-bold text-blue-600';
-                        break;
-                    case 'red':
-                        commandDeckTitle.className = 'text-4xl font-bold text-red-600';
-                        break;
-                    case 'green':
-                        commandDeckTitle.className = 'text-4xl font-bold text-green-600';
-                        break;
-                    case 'yellow':
-                        commandDeckTitle.className = 'text-4xl font-bold text-yellow-500';
-                        break;
-                    case 'orange':
-                        commandDeckTitle.className = 'text-4xl font-bold text-orange-500';
-                        break;
-                    case 'pink':
-                        commandDeckTitle.className = 'text-4xl font-bold text-pink-500';
-                        break;
-                    case 'purple':
-                        commandDeckTitle.className = 'text-4xl font-bold text-purple-600';
-                        break;
-                    case 'white':
-                        commandDeckTitle.className = 'text-4xl font-bold text-gray-800'; // Or another suitable dark color
-                        break;
-                    default:
-                        commandDeckTitle.className = 'text-4xl font-bold text-gray-800';
-                }
-            }
             
-            renderUI();
+            // Initial render and dropdown population
             populateFactionSelect();
             populateDetachmentSelect();
             populateUnitSelect();
