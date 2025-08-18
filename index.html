@@ -24,9 +24,20 @@
     <div id="login-page" class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-8 space-y-8 text-center">
         <h1 class="text-4xl font-bold text-gray-800">Welcome to Command Deck</h1>
         <p class="mt-2 text-lg text-gray-600">Sign in to access your personal roster.</p>
-        <button id="anon-login-btn" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition-colors text-xl">
-            Sign In Anonymously
-        </button>
+        
+        <form id="auth-form" class="space-y-4">
+            <input type="email" id="email-input" placeholder="Email" required class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="password-input" placeholder="Password" required class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                <button type="button" id="register-btn" class="flex-grow px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg">
+                    Register
+                </button>
+                <button type="button" id="sign-in-btn" class="flex-grow px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors shadow-lg">
+                    Sign In
+                </button>
+            </div>
+        </form>
+        <p id="auth-message" class="text-sm text-red-500 mt-4"></p>
     </div>
 
     <!-- Command Deck Page (Initially Hidden) -->
@@ -126,7 +137,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // Your Firebase project configuration
         // !!! IMPORTANT: Replace this with your actual Firebase config !!!
@@ -146,7 +157,11 @@
         // --- DOM Element References ---
         const loginPage = document.getElementById('login-page');
         const rosterAppPage = document.getElementById('roster-app-page');
-        const anonLoginBtn = document.getElementById('anon-login-btn');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const registerBtn = document.getElementById('register-btn');
+        const signInBtn = document.getElementById('sign-in-btn');
+        const authMessage = document.getElementById('auth-message');
         const signOutBtn = document.getElementById('sign-out-btn');
         const userIdSpan = document.getElementById('user-id');
         
@@ -317,23 +332,24 @@
         // --- Helper Functions ---
 
         function showMessage(message) {
-            messageText.textContent = message;
+            authMessage.textContent = message;
             messageBox.classList.remove('hidden');
         }
 
         function closeMessage() {
             messageBox.classList.add('hidden');
+            authMessage.textContent = '';
         }
 
-        async function saveGroups(playerColor) {
-            if (!playerColor) return;
-            const playerDocRef = doc(db, "playerRosters", playerColor);
+        async function saveGroups(playerId) {
+            if (!playerId) return;
+            const playerDocRef = doc(db, "playerRosters", playerId);
             await setDoc(playerDocRef, { groups: groups });
         }
 
-        function loadGroups(playerColor) {
-            if (!playerColor) return;
-            const playerDocRef = doc(db, "playerRosters", playerColor);
+        function loadGroups(playerId) {
+            if (!playerId) return;
+            const playerDocRef = doc(db, "playerRosters", playerId);
             onSnapshot(playerDocRef, (doc) => {
                 if (doc.exists()) {
                     groups = doc.data().groups;
@@ -665,17 +681,37 @@
         }
 
         // --- Event Listeners ---
-        anonLoginBtn.addEventListener('click', () => {
-            signInAnonymously(auth)
+        registerBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                authMessage.textContent = "Please enter an email and password.";
+                return;
+            }
+            createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    currentPlayerId = userCredential.user.uid;
-                    loginPage.classList.add('hidden');
-                    rosterAppPage.classList.remove('hidden');
-                    userIdSpan.textContent = currentPlayerId;
-                    loadGroups(currentPlayerId);
+                    authMessage.textContent = "Registration successful! You are now signed in.";
+                    // User is automatically signed in after creation
                 })
                 .catch((error) => {
-                    showMessage(`Login failed: ${error.message}`);
+                    authMessage.textContent = error.message;
+                });
+        });
+
+        signInBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                authMessage.textContent = "Please enter an email and password.";
+                return;
+            }
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    authMessage.textContent = "Sign in successful!";
+                    // User is automatically signed in
+                })
+                .catch((error) => {
+                    authMessage.textContent = error.message;
                 });
         });
 
@@ -684,8 +720,8 @@
                 .then(() => {
                     groups = [];
                     currentPlayerId = null;
-                    rosterAppPage.classList.add('hidden');
-                    loginPage.classList.remove('hidden');
+                    emailInput.value = '';
+                    passwordInput.value = '';
                     renderUI();
                 })
                 .catch((error) => {
@@ -807,6 +843,9 @@
             } else {
                 loginPage.classList.remove('hidden');
                 rosterAppPage.classList.add('hidden');
+                groups = [];
+                currentPlayerId = null;
+                renderUI();
             }
         });
         
