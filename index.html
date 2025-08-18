@@ -585,4 +585,185 @@
                         if (action === 'delete') {
                             deleteUnit(groupId, unitIndex);
                         } else if (action === 'fall') {
-                            moveUnitToFallen(groupId, unitInde
+                            moveUnitToFallen(groupId, unitIndex);
+                        }
+                    });
+                });
+                
+                document.querySelectorAll('.edit-name-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const groupId = e.currentTarget.previousElementSibling.getAttribute('data-group-id');
+                        const groupNameElement = e.currentTarget.previousElementSibling;
+                        
+                        const currentName = groupNameElement.textContent;
+                        
+                        const inputField = document.createElement('input');
+                        inputField.type = 'text';
+                        inputField.value = currentName;
+                        inputField.className = 'text-2xl font-bold text-gray-800 bg-gray-100 rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+
+                        const saveButton = document.createElement('button');
+                        saveButton.textContent = 'Save';
+                        saveButton.className = 'ml-2 px-3 py-1 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600';
+
+                        const cancelButton = document.createElement('button');
+                        cancelButton.textContent = 'Cancel';
+                        cancelButton.className = 'ml-2 px-3 py-1 bg-gray-300 text-gray-800 rounded-xl hover:bg-gray-400';
+
+                        const parentDiv = groupNameElement.parentNode;
+                        parentDiv.replaceChild(inputField, groupNameElement);
+                        parentDiv.replaceChild(saveButton, e.currentTarget);
+                        parentDiv.appendChild(cancelButton);
+
+                        inputField.focus();
+
+                        saveButton.addEventListener('click', () => {
+                            editGroupName(groupId, inputField.value);
+                        });
+                        
+                        cancelButton.addEventListener('click', () => {
+                            renderUI();
+                        });
+                    });
+                });
+            }
+
+            // --- Event Listeners ---
+            playerSelectBtns.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const color = e.target.dataset.color;
+                    playerSelectionPage.classList.add('hidden');
+                    rosterAppPage.classList.remove('hidden');
+                    // Set the title color based on the selected color
+                    const colorClasses = {
+                        'blue': 'text-blue-600',
+                        'red': 'text-red-600',
+                        'green': 'text-green-600',
+                        'yellow': 'text-yellow-500',
+                        'orange': 'text-orange-500',
+                        'pink': 'text-pink-500',
+                        'purple': 'text-purple-600',
+                        'white': 'text-gray-800'
+                    };
+                    commandDeckTitle.className = `text-4xl font-bold ${colorClasses[color]}`;
+                });
+            });
+
+            backToSelectBtn.addEventListener('click', () => {
+                rosterAppPage.classList.add('hidden');
+                playerSelectionPage.classList.remove('hidden');
+            });
+
+
+            groupSelect.addEventListener('change', () => {
+                const selectedGroupId = groupSelect.value;
+                const selectedGroup = groups.find(g => g.id === parseInt(selectedGroupId));
+                if (selectedGroup) {
+                    detachmentSelect.value = selectedGroup.detachment;
+                }
+            });
+
+            detachmentSelect.addEventListener('change', (e) => {
+                const selectedDetachment = e.target.value;
+                
+                const selectedGroupId = groupSelect.value;
+                if (selectedGroupId) {
+                    const group = groups.find(g => g.id === parseInt(selectedGroupId));
+                    if (group) {
+                        group.detachment = selectedDetachment;
+                        renderUI();
+                    }
+                }
+            });
+            
+            factionSelect.addEventListener('change', (e) => {
+                const selectedFaction = e.target.value;
+                if (selectedFaction === "Adeptus Astartes") {
+                    chapterSelectContainer.classList.remove('hidden');
+                    populateChapterSelect();
+                } else {
+                    chapterSelectContainer.classList.add('hidden');
+                }
+                populateDetachmentSelect(selectedFaction);
+                populateUnitSelect(selectedFaction);
+            });
+            
+            chapterSelect.addEventListener('change', (e) => {
+                const selectedFaction = factionSelect.value;
+                const selectedChapter = e.target.value;
+                populateUnitSelect(selectedFaction, selectedChapter);
+            });
+
+            addBattleshipBtn.addEventListener('click', () => {
+                addGroup('Battleship', 1500);
+            });
+
+            addHeavyCruiserBtn.addEventListener('click', () => {
+                addGroup('Heavy Cruiser', 1000);
+            });
+
+            addCruiserBtn.addEventListener('click', () => {
+                addGroup('Cruiser', 500);
+            });
+            
+            addBluePlanetBtn.addEventListener('click', () => {
+                addGroup('Blue Planet', 1500);
+            });
+
+            addRedPlanetBtn.addEventListener('click', () => {
+                addGroup('Red Planet', 1000);
+            });
+
+            addGoldPlanetBtn.addEventListener('click', () => {
+                addGroup('Gold Planet', 500);
+            });
+
+            addUnitForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const selectedGroupId = groupSelect.value;
+                const selectedFaction = factionSelect.value;
+                const selectedChapter = chapterSelect.value;
+                const selectedUnitOption = unitSelect.options[unitSelect.selectedIndex];
+                
+                if (!selectedGroupId) {
+                    showMessage("Please select a muster point first.");
+                    return;
+                }
+                if (!selectedUnitOption || selectedUnitOption.value === "") {
+                    showMessage("Please select a unit to add.");
+                    return;
+                }
+                
+                const group = groups.find(g => g.id === parseInt(selectedGroupId));
+                const unitName = selectedUnitOption.textContent;
+                const unitCost = parseInt(selectedUnitOption.dataset.cost, 10);
+
+                if (group.pointsUsed + unitCost > group.pointLimit) {
+                    showMessage(`Cannot add unit. Adding ${unitCost} points would exceed the group's limit of ${group.pointLimit}.`);
+                    return;
+                }
+                
+                addUnit(selectedGroupId, unitName, unitCost);
+
+                // Reset Unit dropdown after a unit is added
+                unitSelect.value = "";
+                
+                // Keep the last selected Faction and Chapter
+                factionSelect.value = selectedFaction;
+                if (selectedFaction === "Adeptus Astartes") {
+                    chapterSelect.value = selectedChapter;
+                }
+            });
+
+            closeMessageBtn.addEventListener('click', closeMessage);
+            
+            // Initial render and dropdown population
+            populateFactionSelect();
+            populateDetachmentSelect();
+            populateUnitSelect();
+        });
+    </script>
+
+</body>
+</html>
