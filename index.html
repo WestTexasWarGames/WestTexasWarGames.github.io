@@ -333,11 +333,9 @@
 
         function showMessage(message) {
             authMessage.textContent = message;
-            messageBox.classList.remove('hidden');
         }
 
-        function closeMessage() {
-            messageBox.classList.add('hidden');
+        function clearMessage() {
             authMessage.textContent = '';
         }
 
