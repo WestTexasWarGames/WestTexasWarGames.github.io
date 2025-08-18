@@ -653,7 +653,8 @@
             // --- Event Listeners ---
             playerSelectBtns.forEach(button => {
                 button.addEventListener('click', (e) => {
-                    const color = e.target.dataset.color;
+                    currentPlayerColor = e.target.dataset.color;
+                    loadGroups(currentPlayerColor);
                     playerSelectionPage.classList.add('hidden');
                     rosterAppPage.classList.remove('hidden');
                     // Set the title color based on the selected color
@@ -667,13 +668,17 @@
                         'purple': 'text-purple-600',
                         'white': 'text-gray-800'
                     };
-                    commandDeckTitle.className = `text-4xl font-bold ${colorClasses[color]}`;
+                    commandDeckTitle.className = `text-4xl font-bold ${colorClasses[currentPlayerColor]}`;
+                    renderUI();
                 });
             });
 
             backToSelectBtn.addEventListener('click', () => {
                 rosterAppPage.classList.add('hidden');
                 playerSelectionPage.classList.remove('hidden');
+                groups = []; // Clear the current player's data from memory when they go back
+                currentPlayerColor = null;
+                // You could optionally clear local storage here if you want to wipe data on exit, but it's better to keep it for persistence.
             });
 
 
@@ -693,6 +698,7 @@
                     const group = groups.find(g => g.id === parseInt(selectedGroupId));
                     if (group) {
                         group.detachment = selectedDetachment;
+                        saveGroups(currentPlayerColor);
                         renderUI();
                     }
                 }
