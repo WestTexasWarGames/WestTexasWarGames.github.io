@@ -163,7 +163,8 @@
             // --- Core Data Model ---
             let groups = [];
             let nextGroupId = 0;
-            
+            let currentPlayerColor = null;
+
             // Re-structured units data with factions and chapters.
             const factionsData = {
                 "Adeptus Astartes": {
@@ -313,6 +314,22 @@
             function closeMessage() {
                 messageBox.classList.add('hidden');
             }
+
+            // Save the groups data to local storage for the current player
+            function saveGroups(playerColor) {
+                localStorage.setItem(`groups_${playerColor}`, JSON.stringify(groups));
+            }
+
+            // Load the groups data from local storage for the selected player
+            function loadGroups(playerColor) {
+                const storedGroups = localStorage.getItem(`groups_${playerColor}`);
+                if (storedGroups) {
+                    groups = JSON.parse(storedGroups);
+                } else {
+                    groups = [];
+                }
+                nextGroupId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 0;
+            }
             
             /**
              * Populates the Faction dropdown with data from the `factionsData` object.
@@ -398,6 +415,7 @@
                     detachment: '',
                 };
                 groups.push(newGroup);
+                saveGroups(currentPlayerColor);
                 renderUI();
             }
 
@@ -405,6 +423,7 @@
                 const group = groups.find(g => g.id === parseInt(groupId));
                 if (group) {
                     group.name = newName;
+                    saveGroups(currentPlayerColor);
                     renderUI();
                 }
             }
@@ -428,6 +447,7 @@
                 group.units.push(newUnit);
                 group.pointsUsed += unitCost;
                 
+                saveGroups(currentPlayerColor);
                 renderUI();
             }
 
@@ -441,6 +461,7 @@
                 const unitCost = group.units[unitIndex].cost;
                 group.units.splice(unitIndex, 1);
                 group.pointsUsed -= unitCost;
+                saveGroups(currentPlayerColor);
                 renderUI();
             }
 
@@ -454,6 +475,7 @@
                 const fallenUnit = group.units.splice(unitIndex, 1)[0];
                 group.fallenUnits.push(fallenUnit);
                 group.pointsUsed -= fallenUnit.cost;
+                saveGroups(currentPlayerColor);
                 renderUI();
             }
 
