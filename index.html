@@ -141,17 +141,14 @@
 
         // Your Firebase project configuration
         // !!! IMPORTANT: Replace this with your actual Firebase config !!!
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-        
-const firebaseConfig = {
-  apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
-  authDomain: "conquest-command-deck.firebaseapp.com",
-  projectId: "conquest-command-deck",
-  storageBucket: "conquest-command-deck.firebasestorage.app",
-  messagingSenderId: "993959061285",
-  appId: "1:993959061285:web:438296814ad21edc0b1ccc",
-  measurementId: "G-87NN5SXHXB"
-};
+        const firebaseConfig = {
+            apiKey: "your-api-key",
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdefghij"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -856,4 +853,3 @@ const firebaseConfig = {
     </script>
 </body>
 </html>
-
