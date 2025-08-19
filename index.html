@@ -125,7 +125,7 @@
         </div>
 
         <!-- Message Box for Alerts -->
-        <div id="message-box" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div id="message-box" class="fixed inset-0 bg-gray-600 bg-opacity50 flex items-center justify-center hidden">
             <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm text-center">
                 <p id="message-text" class="text-gray-800 text-lg font-medium"></p>
                 <button id="close-message" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors">OK</button>
@@ -140,7 +140,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // Your Firebase project configuration
-        // !!! IMPORTANT: Replace this with your actual Firebase config !!!
         const firebaseConfig = {
             apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
             authDomain: "conquest-command-deck.firebaseapp.com",
@@ -316,6 +315,32 @@
                     { name: "Astraeus", cost: 525 },
                     { name: "Thunderhawk Gunship", cost: 840 }
                 ],
+                "Black Templars": [
+                    { name: "Castellan", cost: 60 },
+                    { name: "Chaplain Grimaldus (4 models)", cost: 110 },
+                    { name: "Crusade Ancient", cost: 65 },
+                    { name: "Crusader Squad (1 Sword Brother, 5 Initiates and 4 Neophytes)", cost: 150 },
+                    { name: "Crusader Squad (1 Sword Brother, 11 Initiates and 8 Neophytes)", cost: 310 },
+                    { name: "Emperor’s Champion", cost: 90 },
+                    { name: "Execrator", cost: 70 },
+                    { name: "Gladiator Lancer", cost: 160 },
+                    { name: "Gladiator Reaper", cost: 160 },
+                    { name: "Gladiator Valiant", cost: 160 },
+                    { name: "High Marshal Helbrecht", cost: 120 },
+                    { name: "Impulsor", cost: 85 },
+                    { name: "Land Raider Crusader", cost: 220 },
+                    { name: "Marshal", cost: 80 },
+                    { name: "Sternguard Veteran Squad (5 models)", cost: 85 },
+                    { name: "Sternguard Veteran Squad (10 models)", cost: 170 },
+                    { name: "Sword Brethren (4 models)", cost: 105 },
+                    { name: "Sword Brethren (5 models)", cost: 130 },
+                    { name: "Sword Brethren (9 models)", cost: 235 },
+                    { name: "Sword Brethren (10 models)", cost: 260 },
+                    { name: "Terminator Squad (5 models)", cost: 175 },
+                    { name: "Terminator Squad (10 models)", cost: 330 },
+                    { name: "Repulsor", cost: 180 },
+                    { name: "Repulsor Executioner", cost: 220 }
+                ],
                 "Blood Angels": [
                     { name: "Astorath", cost: 95 },
                     { name: "Baal Predator", cost: 125 },
@@ -338,36 +363,11 @@
                     { name: "The Sanguinor", cost: 140 }
                 ],
                 "Dark Angels": [],
-                "Black Templars": [
-                  { "name": "Chaplain Grimaldus", "models": 4,cost: 110 },
-                  { "name": "Crusade Ancient", cost: 65 },
-                  { "name": "Crusader Squad", "models": 10, "notes": "1 Sword Brother, 5 Initiates, and 4 Neophytes",cost: 150 },
-                  { "name": "Crusader Squad", "models": 20, "notes": "1 Sword Brother, 11 Initiates, and 8 Neophytes",cost: 310 },
-                  { "name": "Emperor’s Champion", cost: 90 },
-                  { "name": "Execrator", cost: 70 },
-                  { "name": "Gladiator Lancer", cost: 160 },
-                  { "name": "Gladiator Reaper", cost: 160 },
-                  { "name": "Gladiator Valiant", cost: 160 },
-                  { "name": "High Marshal Helbrecht", cost: 120 },
-                  { "name": "Impulsor", cost: 85 },
-                  { "name": "Land Raider Crusader", cost: 220 },
-                  { "name": "Marshal", cost: 80 },
-                  { "name": "Sternguard Veteran Squad", (5 models)" ,cost: 85 },
-                  { "name": "Sternguard Veteran Squad", (10 models)" ,cost: 170 },
-                  { "name": "Sword Brethren", (4 models)" ,cost: 105 },
-                  { "name": "Sword Brethren", (5 models)" ,cost: 130 },
-                  { "name": "Sword Brethren", (9 models)" ,cost: 235 },  
-                  { "name": "Sword Brethren", (10 models)" ,cost: 260 },
-                  { "name": "Terminator Squad", (5 models)" ,cost: 175 },
-                  { "name": "Terminator Squad", (10 models)" ,cost: 330 },
-                  { "name": "Repulsor", cost: 180 },
-                  { "name": "Repulsor Executioner", cost: 220 }
-               ],
                 "Deathwatch": [],
                 "Imperial Fists": [],
                 "Iron Hands": [],
                 "Raven Guard": [],
-                "Salamanders": [], 
+                "Salamanders": [],
                 "Space Wolves": [],
                 "UltraMarines": [],
                 "White Scars": []
@@ -615,11 +615,13 @@
         // --- Helper Functions ---
 
         function showMessage(message) {
-            authMessage.textContent = message;
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
         }
 
         function clearMessage() {
-            authMessage.textContent = '';
+            messageText.textContent = '';
+            messageBox.classList.add('hidden');
         }
 
         async function saveGroups(playerId) {
@@ -661,7 +663,7 @@
          */
         function populateChapterSelect() {
             chapterSelect.innerHTML = '<option value="" disabled selected>Select a chapter...</option>';
-            const chapters = Object.keys(factionsData["Adeptus Astartes"]).sort();
+            const chapters = Object.keys(factionsData["Adeptus Astartes"]).filter(c => c !== "general").sort();
             chapters.forEach(chapter => {
                 const option = document.createElement('option');
                 option.value = chapter;
@@ -1187,6 +1189,3 @@
     </script>
 </body>
 </html>
-
-
-
