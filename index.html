@@ -23,21 +23,13 @@
     <!-- Login Page -->
     <div id="login-page" class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-8 space-y-8 text-center">
         <h1 class="text-4xl font-bold text-gray-800">Welcome to Command Deck</h1>
-        <p class="mt-2 text-lg text-gray-600">Sign in to access your personal roster.</p>
-        
-        <form id="auth-form" class="space-y-4">
-            <input type="email" id="email-input" placeholder="Email" required class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <input type="password" id="password-input" placeholder="Password" required class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                <button type="button" id="register-btn" class="flex-grow px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg">
-                    Register
-                </button>
-                <button type="button" id="sign-in-btn" class="flex-grow px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors shadow-lg">
-                    Sign In
-                </button>
-            </div>
-        </form>
-        <p id="auth-message" class="text-sm text-red-500 mt-4"></p>
+        <p class="mt-2 text-lg text-gray-600">Signing you in automatically...</p>
+        <div class="mt-4">
+            <svg class="animate-spin h-8 w-8 text-gray-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </div>
     </div>
 
     <!-- Command Deck Page (Initially Hidden) -->
@@ -95,6 +87,12 @@
                         <!-- Options will be populated by JavaScript -->
                     </select>
                 </div>
+                <div id="chapter-select-container" class="hidden">
+                    <label for="chapter-select" class="block text-sm font-medium text-gray-700">Select a Chapter</label>
+                    <select id="chapter-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
                 <div>
                     <label for="detachment-select" class="block text-sm font-medium text-gray-700">Select a Detachment</label>
                     <select id="detachment-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2">
@@ -119,7 +117,7 @@
         </div>
 
         <!-- Message Box for Alerts -->
-        <div id="message-box" class="fixed inset-0 bg-gray-600 bg-opacity50 flex items-center justify-center hidden">
+        <div id="message-box" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
             <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm text-center">
                 <p id="message-text" class="text-gray-800 text-lg font-medium"></p>
                 <button id="close-message" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors">OK</button>
@@ -131,31 +129,66 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Your Firebase project configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
-            authDomain: "conquest-command-deck.firebaseapp.com",
-            projectId: "conquest-command-deck",
-            storageBucket: "conquest-command-deck.firebasestorage.app",
-            messagingSenderId: "993959061285",
-            appId: "1:993959061285:web:438296814ad21edc0b1ccc",
-            measurementId: "G-87NN5SXHXB"
+        // --- Firebase Configuration and Initialization ---
+        // These are global variables provided by the Canvas environment.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+
+        // Initialize Firebase services only after the window has loaded
+        window.onload = async function() {
+            try {
+                // Check if the firebaseConfig is valid before initializing
+                if (Object.keys(firebaseConfig).length === 0) {
+                    throw new Error("Firebase configuration is missing or invalid.");
+                }
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Sign in the user with the custom token or anonymously
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                // Set up the authentication state listener
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentPlayerId = user.uid;
+                        userIdSpan.textContent = currentPlayerId;
+                        loginPage.classList.add('hidden');
+                        rosterAppPage.classList.remove('hidden');
+                        loadGroups(currentPlayerId);
+                        populateFactionSelect();
+                    } else {
+                        loginPage.classList.remove('hidden');
+                        rosterAppPage.classList.add('hidden');
+                        groups = [];
+                        currentPlayerId = null;
+                        renderUI();
+                    }
+                });
+
+                // Set up event listeners after Firebase initialization
+                setupEventListeners();
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                // Use the new showMessage modal for all alerts
+                showMessage(`Failed to initialize the app: ${error.message}`);
+            }
         };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
 
         // --- DOM Element References ---
         const loginPage = document.getElementById('login-page');
         const rosterAppPage = document.getElementById('roster-app-page');
-        const emailInput = document.getElementById('email-input');
-        const passwordInput = document.getElementById('password-input');
-        const registerBtn = document.getElementById('register-btn');
-        const signInBtn = document.getElementById('sign-in-btn');
-        const authMessage = document.getElementById('auth-message');
         const signOutBtn = document.getElementById('sign-out-btn');
         const userIdSpan = document.getElementById('user-id');
         
@@ -169,6 +202,8 @@
         const addUnitForm = document.getElementById('add-unit-form');
         const groupSelect = document.getElementById('group-select');
         const factionSelect = document.getElementById('faction-select');
+        const chapterSelectContainer = document.getElementById('chapter-select-container');
+        const chapterSelect = document.getElementById('chapter-select');
         const detachmentSelect = document.getElementById('detachment-select');
         const unitSelect = document.getElementById('unit-select');
         const messageBox = document.getElementById('message-box');
@@ -182,7 +217,7 @@
         let nextGroupId = 0;
         let currentPlayerId = null;
 
-        // Re-structured units data with factions.
+        // Re-structured units data with factions and chapters.
         const factionsData = {
             "Adeptus Astartes": {
                 "general": [
@@ -529,7 +564,7 @@
                 { name: "Eightbound (3 models)", cost: 150 },
                 { name: "Eightbound (6 models)", cost: 300 },
                 { name: "Exalted Eightbound (3 models)", cost: 160 },
-                { name: "Exalted Eightbound (6 models)", cost: 320 },
+                    { name: "Exalted Eightbound (6 models)", cost: 320 },
                 { name: "Forgefiend", cost: 150 },
                 { name: "Goremongers (8 models)", cost: 85 },
                 { name: "Helbrute", cost: 120 },
@@ -604,7 +639,10 @@
             ],
         };
 
-        // --- Helper Functions ---
+        // --- Core Application Logic ---
+        let groups = [];
+        let nextGroupId = 0;
+        let currentPlayerId = null;
 
         function showMessage(message) {
             messageText.textContent = message;
@@ -618,13 +656,18 @@
 
         async function saveGroups(playerId) {
             if (!playerId) return;
-            const playerDocRef = doc(db, "playerRosters", playerId);
-            await setDoc(playerDocRef, { groups: groups });
+            const playerDocRef = doc(db, `artifacts/${appId}/users/${playerId}`, "roster");
+            try {
+                await setDoc(playerDocRef, { groups: groups });
+            } catch (error) {
+                console.error("Error saving groups:", error);
+                showMessage("Failed to save roster. Please check your connection.");
+            }
         }
 
         function loadGroups(playerId) {
             if (!playerId) return;
-            const playerDocRef = doc(db, "playerRosters", playerId);
+            const playerDocRef = doc(db, `artifacts/${appId}/users/${playerId}`, "roster");
             onSnapshot(playerDocRef, (doc) => {
                 if (doc.exists()) {
                     groups = doc.data().groups;
@@ -633,51 +676,11 @@
                 }
                 nextGroupId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 0;
                 renderUI();
+            }, (error) => {
+                console.error("Error listening to group changes:", error);
             });
         }
         
-        /**
-         * Populates the Faction dropdown with data from the `factionsData` object.
-         */
-        function populateFactionSelect() {
-            factionSelect.innerHTML = '<option value="" disabled selected>Select a faction...</option>';
-            const factions = Object.keys(factionsData).sort();
-            factions.forEach(faction => {
-                const option = document.createElement('option');
-                option.value = faction;
-                option.textContent = faction;
-                factionSelect.appendChild(option);
-            });
-        }
-
-        /**
-         * Populates the Detachment dropdown based on the selected faction.
-         * @param {string} factionName - The name of the selected faction.
-         */
-        function populateDetachmentSelect(factionName) {
-            detachmentSelect.innerHTML = '<option value="" disabled selected>Select a detachment...</option>';
-            const detachments = detachmentsData[factionName] || detachmentsData["General"];
-            
-            detachments.forEach(detachment => {
-                const option = document.createElement('option');
-                option.value = detachment;
-                option.textContent = detachment;
-                detachmentSelect.appendChild(option);
-            });
-            }
-
-            if (units.length > 0) {
-                units.forEach((unit) => {
-                    const option = document.createElement('option');
-                    option.dataset.cost = unit.cost;
-                    option.textContent = `${unit.name} (${unit.cost} pts)`;
-                    unitSelect.appendChild(option);
-                });
-            }
-        }
-
-        // --- Main Application Logic ---
-
         function addGroup(name, pointLimit) {
             const newGroup = {
                 id: nextGroupId++,
@@ -773,9 +776,68 @@
             }
         }
 
+        function populateFactionSelect() {
+            factionSelect.innerHTML = '<option value="" disabled selected>Select a faction...</option>';
+            const factions = Object.keys(factionsData).sort();
+            factions.forEach(faction => {
+                const option = document.createElement('option');
+                option.value = faction;
+                option.textContent = faction;
+                factionSelect.appendChild(option);
+            });
+        }
+
+        function populateChapterSelect() {
+            chapterSelect.innerHTML = '<option value="" disabled selected>Select a chapter...</option>';
+            const chapters = Object.keys(factionsData["Adeptus Astartes"]).filter(c => c !== "general").sort();
+            chapters.forEach(chapter => {
+                const option = document.createElement('option');
+                option.value = chapter;
+                option.textContent = chapter;
+                chapterSelect.appendChild(option);
+            });
+        }
+
+        function populateDetachmentSelect(factionName) {
+            detachmentSelect.innerHTML = '<option value="" disabled selected>Select a detachment...</option>';
+            const detachments = detachmentsData[factionName] || detachmentsData["General"];
+            
+            detachments.forEach(detachment => {
+                const option = document.createElement('option');
+                option.value = detachment;
+                option.textContent = detachment;
+                detachmentSelect.appendChild(option);
+            });
+        }
+        
+        function populateUnitSelect(factionName, chapterName) {
+            unitSelect.innerHTML = '<option value="" disabled selected>Select a unit...</option>';
+            
+            let units = [];
+            if (factionName === "Adeptus Astartes") {
+                if (chapterName && factionsData[factionName][chapterName]) {
+                    units = factionsData[factionName][chapterName].concat(factionsData[factionName]["general"] || []);
+                } else {
+                    units = factionsData[factionName]["general"] || [];
+                }
+            } else if (factionsData[factionName] && Array.isArray(factionsData[factionName])) {
+                units = factionsData[factionName];
+            }
+
+            if (units.length > 0) {
+                units.forEach((unit) => {
+                    const option = document.createElement('option');
+                    option.dataset.cost = unit.cost;
+                    option.textContent = `${unit.name} (${unit.cost} pts)`;
+                    unitSelect.appendChild(option);
+                });
+            }
+        }
+
         function renderUI() {
             const selectedGroupId = groupSelect.value;
             const selectedFaction = factionSelect.value;
+            const selectedChapter = chapterSelect.value;
             
             rostersContainer.innerHTML = '';
             groupSelect.innerHTML = '<option value="" disabled selected>Select Ship\\Planet...</option>';
@@ -891,6 +953,19 @@
             if (selectedGroupId && groups.some(g => g.id === parseInt(selectedGroupId))) {
                 groupSelect.value = selectedGroupId;
             }
+            if (selectedFaction) {
+                factionSelect.value = selectedFaction;
+                if (selectedFaction === "Adeptus Astartes") {
+                    chapterSelectContainer.classList.remove('hidden');
+                    populateChapterSelect();
+                    if (selectedChapter) {
+                        chapterSelect.value = selectedChapter;
+                    }
+                } else {
+                    chapterSelectContainer.classList.add('hidden');
+                }
+                populateUnitSelect(selectedFaction, selectedChapter);
+            }
 
             document.querySelectorAll('.action-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
@@ -916,8 +991,8 @@
             
             document.querySelectorAll('.edit-name-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
-                    const groupId = e.currentTarget.previousElementSibling.getAttribute('data-group-id');
                     const groupNameElement = e.currentTarget.previousElementSibling;
+                    const groupId = groupNameElement.getAttribute('data-group-id');
                     
                     const currentName = groupNameElement.textContent;
                     
@@ -960,47 +1035,12 @@
         }
 
         // --- Event Listeners ---
-        registerBtn.addEventListener('click', () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            if (!email || !password) {
-                showMessage("Please enter an email and password.");
-                return;
-            }
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    showMessage("Registration successful! You are now signed in.");
-                    // User is automatically signed in after creation
-                })
-                .catch((error) => {
-                    showMessage(error.message);
-                });
-        });
-
-        signInBtn.addEventListener('click', () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            if (!email || !password) {
-                showMessage("Please enter an email and password.");
-                return;
-            }
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    showMessage("Sign in successful!");
-                    // User is automatically signed in
-                })
-                .catch((error) => {
-                    showMessage(error.message);
-                });
-        });
-
+        // Removed register and sign in button event listeners
         signOutBtn.addEventListener('click', () => {
             signOut(auth)
                 .then(() => {
                     groups = [];
                     currentPlayerId = null;
-                    emailInput.value = '';
-                    passwordInput.value = '';
                     renderUI();
                 })
                 .catch((error) => {
@@ -1028,6 +1068,24 @@
                     renderUI();
                 }
             }
+        });
+
+        factionSelect.addEventListener('change', (e) => {
+            const selectedFaction = e.target.value;
+            if (selectedFaction === "Adeptus Astartes") {
+                chapterSelectContainer.classList.remove('hidden');
+                populateChapterSelect();
+            } else {
+                chapterSelectContainer.classList.add('hidden');
+            }
+            populateDetachmentSelect(selectedFaction);
+            populateUnitSelect(selectedFaction);
+        });
+        
+        chapterSelect.addEventListener('change', (e) => {
+            const selectedFaction = factionSelect.value;
+            const selectedChapter = e.target.value;
+            populateUnitSelect(selectedFaction, selectedChapter);
         });
 
         addBattleshipBtn.addEventListener('click', () => {
@@ -1059,6 +1117,7 @@
 
             const selectedGroupId = groupSelect.value;
             const selectedFaction = factionSelect.value;
+            const selectedChapter = chapterSelect.value;
             const selectedUnitOption = unitSelect.options[unitSelect.selectedIndex];
             
             if (!selectedGroupId) {
@@ -1084,11 +1143,16 @@
             // Reset Unit dropdown after a unit is added
             unitSelect.value = "";
             
+            // Keep the last selected Faction and Chapter
+            factionSelect.value = selectedFaction;
+            if (selectedFaction === "Adeptus Astartes") {
+                chapterSelect.value = selectedChapter;
             }
         });
 
         closeMessageBtn.addEventListener('click', clearMessage);
-
+        
+        // This block handles the sign-in logic
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentPlayerId = user.uid;
@@ -1104,11 +1168,11 @@
                 renderUI();
             }
         });
-        
+
+        // These initial calls are necessary for the UI to be populated on the first load.
         populateFactionSelect();
         populateDetachmentSelect();
         populateUnitSelect();
     </script>
 </body>
 </html>
-
