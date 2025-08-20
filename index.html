@@ -662,7 +662,7 @@
             });
 
             closeMessageBtn.addEventListener('click', clearMessage);
-
+            
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     currentPlayerId = user.uid;
@@ -688,4 +688,3 @@
     </script>
 </body>
 </html>
-
