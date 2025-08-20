@@ -67,19 +67,6 @@
             </button>
         </div>
         
-        <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
-            <button id="add-blue-planet" class="w-full sm:w-auto px-6 py-3 bg-cyan-600 text-white font-semibold rounded-xl hover:bg-cyan-700 transition-colors shadow-lg">
-                Add Blue Planet
-            </button>
-            <button id="add-red-planet" class="w-full sm:w-auto px-6 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors shadow-lg">
-                Add Red Planet
-            </button>
-            <button id="add-gold-planet" class="w-full sm:w-auto px-6 py-3 bg-yellow-500 text-white font-semibold rounded-xl hover:bg-yellow-600 transition-colors shadow-lg">
-                Add Gold Planet
-            </button>
-        </div>
-
-        <!-- Add Unit Form -->
         <div class="bg-gray-50 p-6 rounded-xl shadow-inner">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4">Unit Assignment</h2>
             <form id="add-unit-form" class="space-y-4">
@@ -124,15 +111,15 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- Your Firebase project configuration ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
-            authDomain: "conquest-command-deck.firebaseapp.com",
-            projectId: "conquest-command-deck",
-            storageBucket: "conquest-command-deck.firebasestorage.app",
-            messagingSenderId: "993959061285",
-            appId: "1:993959061285:web:438296814ad21edc0b1ccc",
-            measurementId: "G-87NN5SXHXB"
-        };
+const firebaseConfig = {
+  apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
+  authDomain: "conquest-command-deck.firebaseapp.com",
+  projectId: "conquest-command-deck",
+  storageBucket: "conquest-command-deck.firebasestorage.app",
+  messagingSenderId: "993959061285",
+  appId: "1:993959061285:web:438296814ad21edc0b1ccc",
+  measurementId: "G-87NN5SXHXB"
+};
         
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -370,7 +357,7 @@
                             <div class="flex items-center space-x-2">
                                 <!-- Tombstone button for "The Fallen" -->
                                 <button class="action-btn text-gray-400 hover:text-red-500 transition-colors" data-action="fall" data-group-id="${group.id}" data-unit-index="${index}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 384 512" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M192 0C86 0 0 86 0 192V448C0 465.7 14.33 480 32 480H64V512H96V480H288V512H320V480H352C369.7 480 384 465.7 384 448V192C384 86 298 0 192 0zM224 256C224 264.8 216.8 272 208 272H176C167.2 272 160 264.8 160 256V224C160 215.2 167.2 208 176 208H208C216.8 208 224 215.2 224 224V256zM224 352C224 360.8 216.8 368 208 368H176C167.2 368 160 360.8 160 352V320C160 311.2 167.2 304 176 304H208C216.8 304 224 311.2 224 320V352z"/>
                                     </svg>
                                 </button>
