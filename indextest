@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <!-- Auth Form -->
+    <div id="auth-container" class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-8 space-y-8 text-center">
+        <h1 class="text-4xl font-bold text-gray-800">Test Firebase Auth</h1>
+        <p class="mt-2 text-lg text-gray-600">Enter your credentials to test.</p>
+        
+        <form id="auth-form" class="space-y-4">
+            <input type="email" id="email-input" placeholder="Email" required class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="password-input" placeholder="Password" required class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                <button type="button" id="register-btn" class="flex-grow px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg">
+                    Register
+                </button>
+                <button type="button" id="sign-in-btn" class="flex-grow px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors shadow-lg">
+                    Sign In
+                </button>
+            </div>
+        </form>
+        <p id="auth-message" class="text-sm text-red-500 mt-4"></p>
+
+        <!-- User Info after successful sign-in -->
+        <div id="user-info" class="hidden">
+            <h2 class="text-2xl font-bold text-gray-800">You are signed in!</h2>
+            <p>Your User ID: <span id="user-id" class="font-mono text-gray-800"></span></p>
+            <button id="sign-out-btn" class="mt-4 px-6 py-3 bg-gray-500 text-white font-semibold rounded-xl shadow-lg hover:bg-gray-600 transition-colors">
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- Your Firebase project configuration ---
+        // IMPORTANT: Replace these placeholder values with your actual project's credentials.
+        // You can find these in your Firebase project settings under "Project settings" -> "General"
+        // and scroll down to "Your apps".
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // --- DOM Element References ---
+        const authContainer = document.getElementById('auth-container');
+        const authForm = document.getElementById('auth-form');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const registerBtn = document.getElementById('register-btn');
+        const signInBtn = document.getElementById('sign-in-btn');
+        const signOutBtn = document.getElementById('sign-out-btn');
+        const authMessage = document.getElementById('auth-message');
+        const userInfoDiv = document.getElementById('user-info');
+        const userIdSpan = document.getElementById('user-id');
+
+        // --- Event Listeners ---
+        function setupEventListeners() {
+            registerBtn.addEventListener('click', () => {
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                if (!email || !password) {
+                    showMessage("Please enter an email and password.");
+                    return;
+                }
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        showMessage("Registration successful! You are now signed in.");
+                        // The onAuthStateChanged listener will handle UI changes
+                    })
+                    .catch((error) => {
+                        showMessage(error.message);
+                    });
+            });
+
+            signInBtn.addEventListener('click', () => {
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                if (!email || !password) {
+                    showMessage("Please enter an email and password.");
+                    return;
+                }
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        showMessage("Sign in successful!");
+                        // The onAuthStateChanged listener will handle UI changes
+                    })
+                    .catch((error) => {
+                        showMessage(error.message);
+                    });
+            });
+
+            signOutBtn.addEventListener('click', () => {
+                signOut(auth)
+                    .then(() => {
+                        showMessage("You have been signed out.");
+                        // The onAuthStateChanged listener will handle UI changes
+                    })
+                    .catch((error) => {
+                        showMessage(`Logout failed: ${error.message}`);
+                    });
+            });
+        }
+        
+        // --- Helper Functions ---
+        function showMessage(message) {
+            authMessage.textContent = message;
+        }
+
+        // --- Auth State Listener ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in
+                userInfoDiv.classList.remove('hidden');
+                authForm.classList.add('hidden');
+                userIdSpan.textContent = user.uid;
+            } else {
+                // User is signed out
+                userInfoDiv.classList.add('hidden');
+                authForm.classList.remove('hidden');
+            }
+        });
+
+        // Call the event listener setup function on page load
+        window.onload = setupEventListeners;
+
+    </script>
+</body>
+</html>
