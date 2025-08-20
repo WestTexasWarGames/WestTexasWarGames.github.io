@@ -139,10 +139,7 @@
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- Your Firebase project configuration for GitHub Pages ---
-        // IMPORTANT: Replace these placeholder values with your actual project's credentials.
-        // You can find these in your Firebase project settings under "Project settings" -> "General"
-        // and scroll down to "Your apps".
+        // --- Your Firebase project configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
             authDomain: "conquest-command-deck.firebaseapp.com",
@@ -1175,8 +1172,7 @@
                 renderUI();
             }
         });
-
-        // These initial calls are necessary for the UI to be populated on the first load.
+        
         populateFactionSelect();
         populateDetachmentSelect();
         populateUnitSelect();
