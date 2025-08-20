@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -126,7 +125,7 @@
         </div>
 
         <!-- Message Box for Alerts -->
-        <div id="message-box" class="fixed inset-0 bg-gray-600 bg-opacity50 flex items-center justify-center hidden">
+        <div id="message-box" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
             <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm text-center">
                 <p id="message-text" class="text-gray-800 text-lg font-medium"></p>
                 <button id="close-message" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors">OK</button>
@@ -140,20 +139,62 @@
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Your Firebase project configuration
+        // --- Your Firebase project configuration for GitHub Pages ---
+        // IMPORTANT: Replace these placeholder values with your actual project's credentials.
+        // You can find these in your Firebase project settings under "Project settings" -> "General"
+        // and scroll down to "Your apps".
         const firebaseConfig = {
-            apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
-            authDomain: "conquest-command-deck.firebaseapp.com",
-            projectId: "conquest-command-deck",
-            storageBucket: "conquest-command-deck.firebasestorage.app",
-            messagingSenderId: "993959061285",
-            appId: "1:993959061285:web:438296814ad21edc0b1ccc",
-            measurementId: "G-87NN5SXHXB"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
         };
+        
+        let app, db, auth;
+        let groups = [];
+        let nextGroupId = 0;
+        let currentPlayerId = null;
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        window.onload = async function() {
+            try {
+                // Initialize Firebase app
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Set up the authentication state listener
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentPlayerId = user.uid;
+                        userIdSpan.textContent = currentPlayerId;
+                        loginPage.classList.add('hidden');
+                        rosterAppPage.classList.remove('hidden');
+                        loadGroups(currentPlayerId);
+                    } else {
+                        loginPage.classList.remove('hidden');
+                        rosterAppPage.classList.add('hidden');
+                        groups = [];
+                        currentPlayerId = null;
+                        renderUI();
+                    }
+                });
+
+                // Set up event listeners after Firebase initialization
+                setupEventListeners();
+                
+                // Populate dropdowns on initial load
+                populateFactionSelect();
+                populateDetachmentSelect();
+                populateUnitSelect();
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                showMessage(`Failed to initialize the app: ${error.message}`);
+            }
+        };
 
         // --- DOM Element References ---
         const loginPage = document.getElementById('login-page');
@@ -183,14 +224,7 @@
         const messageBox = document.getElementById('message-box');
         const messageText = document.getElementById('message-text');
         const closeMessageBtn = document.getElementById('close-message');
-        const addUnitBtn = document.querySelector('#add-unit-form button[type="submit"]');
-        const commandDeckTitle = document.getElementById('command-deck-title');
-
-        // --- Core Data Model ---
-        let groups = [];
-        let nextGroupId = 0;
-        let currentPlayerId = null;
-
+        
         // Re-structured units data with factions and chapters.
         const factionsData = {
             "Adeptus Astartes": {
@@ -538,7 +572,7 @@
                 { name: "Eightbound (3 models)", cost: 150 },
                 { name: "Eightbound (6 models)", cost: 300 },
                 { name: "Exalted Eightbound (3 models)", cost: 160 },
-                { name: "Exalted Eightbound (6 models)", cost: 320 },
+                    { name: "Exalted Eightbound (6 models)", cost: 320 },
                 { name: "Forgefiend", cost: 150 },
                 { name: "Goremongers (8 models)", cost: 85 },
                 { name: "Helbrute", cost: 120 },
@@ -613,7 +647,10 @@
             ],
         };
 
-        // --- Helper Functions ---
+        // --- Core Application Logic ---
+        let groups = [];
+        let nextGroupId = 0;
+        let currentPlayerId = null;
 
         function showMessage(message) {
             messageText.textContent = message;
@@ -627,13 +664,18 @@
 
         async function saveGroups(playerId) {
             if (!playerId) return;
-            const playerDocRef = doc(db, "playerRosters", playerId);
-            await setDoc(playerDocRef, { groups: groups });
+            const playerDocRef = doc(db, `artifacts/${appId}/users/${playerId}`, "roster");
+            try {
+                await setDoc(playerDocRef, { groups: groups });
+            } catch (error) {
+                console.error("Error saving groups:", error);
+                showMessage("Failed to save roster. Please check your connection.");
+            }
         }
 
         function loadGroups(playerId) {
             if (!playerId) return;
-            const playerDocRef = doc(db, "playerRosters", playerId);
+            const playerDocRef = doc(db, `artifacts/${appId}/users/${playerId}`, "roster");
             onSnapshot(playerDocRef, (doc) => {
                 if (doc.exists()) {
                     groups = doc.data().groups;
@@ -642,84 +684,11 @@
                 }
                 nextGroupId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 0;
                 renderUI();
+            }, (error) => {
+                console.error("Error listening to group changes:", error);
             });
         }
         
-        /**
-         * Populates the Faction dropdown with data from the `factionsData` object.
-         */
-        function populateFactionSelect() {
-            factionSelect.innerHTML = '<option value="" disabled selected>Select a faction...</option>';
-            const factions = Object.keys(factionsData).sort();
-            factions.forEach(faction => {
-                const option = document.createElement('option');
-                option.value = faction;
-                option.textContent = faction;
-                factionSelect.appendChild(option);
-            });
-        }
-
-        /**
-         * Populates the Chapter dropdown for Adeptus Astartes.
-         */
-        function populateChapterSelect() {
-            chapterSelect.innerHTML = '<option value="" disabled selected>Select a chapter...</option>';
-            const chapters = Object.keys(factionsData["Adeptus Astartes"]).filter(c => c !== "general").sort();
-            chapters.forEach(chapter => {
-                const option = document.createElement('option');
-                option.value = chapter;
-                option.textContent = chapter;
-                chapterSelect.appendChild(option);
-            });
-        }
-
-        /**
-         * Populates the Detachment dropdown based on the selected faction.
-         * @param {string} factionName - The name of the selected faction.
-         */
-        function populateDetachmentSelect(factionName) {
-            detachmentSelect.innerHTML = '<option value="" disabled selected>Select a detachment...</option>';
-            const detachments = detachmentsData[factionName] || detachmentsData["General"];
-            
-            detachments.forEach(detachment => {
-                const option = document.createElement('option');
-                option.value = detachment;
-                option.textContent = detachment;
-                detachmentSelect.appendChild(option);
-            });
-        }
-        
-        /**
-         * Populates the unit dropdown with units from the selected faction and chapter.
-         * @param {string} factionName - The name of the selected faction.
-         * @param {string} chapterName - The name of the selected chapter (optional).
-         */
-        function populateUnitSelect(factionName, chapterName) {
-            unitSelect.innerHTML = '<option value="" disabled selected>Select a unit...</option>';
-            
-            let units = [];
-            if (factionName === "Adeptus Astartes") {
-                if (chapterName && factionsData[factionName][chapterName]) {
-                    units = factionsData[factionName][chapterName].concat(factionsData[factionName]["general"] || []);
-                } else {
-                    units = factionsData[factionName]["general"] || [];
-                }
-            } else if (factionsData[factionName] && Array.isArray(factionsData[factionName])) {
-                units = factionsData[factionName];
-            }
-
-            if (units.length > 0) {
-                units.forEach((unit) => {
-                    const option = document.createElement('option');
-                    option.dataset.cost = unit.cost;
-                    option.textContent = `${unit.name} (${unit.cost} pts)`;
-                    unitSelect.appendChild(option);
-                });
-            }
-        }
-
-        // --- Main Application Logic ---
-
         function addGroup(name, pointLimit) {
             const newGroup = {
                 id: nextGroupId++,
@@ -812,6 +781,64 @@
                 groups.splice(groupIndex, 1);
                 saveGroups(currentPlayerId);
                 renderUI();
+            }
+        }
+
+        function populateFactionSelect() {
+            factionSelect.innerHTML = '<option value="" disabled selected>Select a faction...</option>';
+            const factions = Object.keys(factionsData).sort();
+            factions.forEach(faction => {
+                const option = document.createElement('option');
+                option.value = faction;
+                option.textContent = faction;
+                factionSelect.appendChild(option);
+            });
+        }
+
+        function populateChapterSelect() {
+            chapterSelect.innerHTML = '<option value="" disabled selected>Select a chapter...</option>';
+            const chapters = Object.keys(factionsData["Adeptus Astartes"]).filter(c => c !== "general").sort();
+            chapters.forEach(chapter => {
+                const option = document.createElement('option');
+                option.value = chapter;
+                option.textContent = chapter;
+                chapterSelect.appendChild(option);
+            });
+        }
+
+        function populateDetachmentSelect(factionName) {
+            detachmentSelect.innerHTML = '<option value="" disabled selected>Select a detachment...</option>';
+            const detachments = detachmentsData[factionName] || detachmentsData["General"];
+            
+            detachments.forEach(detachment => {
+                const option = document.createElement('option');
+                option.value = detachment;
+                option.textContent = detachment;
+                detachmentSelect.appendChild(option);
+            });
+        }
+        
+        function populateUnitSelect(factionName, chapterName) {
+            unitSelect.innerHTML = '<option value="" disabled selected>Select a unit...</option>';
+            
+            let units = [];
+            if (factionName === "Adeptus Astartes") {
+                if (chapterName && factionsData[factionName][chapterName]) {
+                    units = factionsData[factionName][chapterName].concat(factionsData[factionName]["general"] || []);
+                } else {
+                    units = factionsData[factionName]["general"] || [];
+                }
+            } else if (factionsData[factionName] && Array.isArray(factionsData[factionName])) {
+                units = factionsData[factionName];
+            }
+
+            if (units.length > 0) {
+                units.forEach((unit) => {
+                    const option = document.createElement('option');
+                    option.dataset.cost = unit.cost;
+                    option.textContent = `${unit.name} (${unit.cost} pts)`;
+                    unitSelect.appendChild(option);
+                });
             }
         }
 
@@ -972,8 +999,8 @@
             
             document.querySelectorAll('.edit-name-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
-                    const groupId = e.currentTarget.previousElementSibling.getAttribute('data-group-id');
                     const groupNameElement = e.currentTarget.previousElementSibling;
+                    const groupId = groupNameElement.getAttribute('data-group-id');
                     
                     const currentName = groupNameElement.textContent;
                     
@@ -1016,47 +1043,11 @@
         }
 
         // --- Event Listeners ---
-        registerBtn.addEventListener('click', () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            if (!email || !password) {
-                showMessage("Please enter an email and password.");
-                return;
-            }
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    showMessage("Registration successful! You are now signed in.");
-                    // User is automatically signed in after creation
-                })
-                .catch((error) => {
-                    showMessage(error.message);
-                });
-        });
-
-        signInBtn.addEventListener('click', () => {
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            if (!email || !password) {
-                showMessage("Please enter an email and password.");
-                return;
-            }
-            signInWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    showMessage("Sign in successful!");
-                    // User is automatically signed in
-                })
-                .catch((error) => {
-                    showMessage(error.message);
-                });
-        });
-
         signOutBtn.addEventListener('click', () => {
             signOut(auth)
                 .then(() => {
                     groups = [];
                     currentPlayerId = null;
-                    emailInput.value = '';
-                    passwordInput.value = '';
                     renderUI();
                 })
                 .catch((error) => {
@@ -1085,7 +1076,7 @@
                 }
             }
         });
-        
+
         factionSelect.addEventListener('change', (e) => {
             const selectedFaction = e.target.value;
             if (selectedFaction === "Adeptus Astartes") {
@@ -1167,7 +1158,8 @@
         });
 
         closeMessageBtn.addEventListener('click', clearMessage);
-
+        
+        // This block handles the sign-in logic
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentPlayerId = user.uid;
@@ -1183,7 +1175,8 @@
                 renderUI();
             }
         });
-        
+
+        // These initial calls are necessary for the UI to be populated on the first load.
         populateFactionSelect();
         populateDetachmentSelect();
         populateUnitSelect();
