@@ -90,10 +90,12 @@
                     </select>
                 </div>
                 <div>
-                    <label for="unit-select" class="block text-sm font-medium text-gray-700">Select a Unit</label>
-                    <select id="unit-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2">
-                        <!-- Options will be populated by JavaScript -->
-                    </select>
+                    <label for="unit-name-input" class="block text-sm font-medium text-gray-700">Unit Name</label>
+                    <input type="text" id="unit-name-input" placeholder="Enter unit name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2">
+                </div>
+                <div>
+                    <label for="unit-cost-input" class="block text-sm font-medium text-gray-700">Unit Cost</label>
+                    <input type="number" id="unit-cost-input" placeholder="Enter unit cost" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 p-2">
                 </div>
                 <button type="submit" class="w-full px-4 py-2 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors shadow-lg">
                     Add Unit
@@ -120,17 +122,19 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        
+
         // --- Your Firebase project configuration ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
-            authDomain: "conquest-command-deck.firebaseapp.com",
-            projectId: "conquest-command-deck",
-            storageBucket: "conquest-command-deck.firebasestorage.app",
-            messagingSenderId: "993959061285",
-            appId: "1:993959061285:web:438296814ad21edc0b1ccc",
-            measurementId: "G-87NN5SXHXB"
-        };
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
+  authDomain: "conquest-command-deck.firebaseapp.com",
+  projectId: "conquest-command-deck",
+  storageBucket: "conquest-command-deck.firebasestorage.app",
+  messagingSenderId: "993959061285",
+  appId: "1:993959061285:web:438296814ad21edc0b1ccc",
+  measurementId: "G-87NN5SXHXB"
+};
         
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -156,7 +160,8 @@
         const rostersContainer = document.getElementById('rosters-container');
         const addUnitForm = document.getElementById('add-unit-form');
         const groupSelect = document.getElementById('group-select');
-        const unitSelect = document.getElementById('unit-select');
+        const unitNameInput = document.getElementById('unit-name-input');
+        const unitCostInput = document.getElementById('unit-cost-input');
         const messageBox = document.getElementById('message-box');
         const messageText = document.getElementById('message-text');
         const closeMessageBtn = document.getElementById('close-message');
@@ -166,86 +171,14 @@
         let nextGroupId = 0;
         let currentPlayerId = null;
 
-        // Re-structured units data
-        const unitsData = [
-            { name: "Adrax Agatone", cost: 85 },
-            { name: "Aggressor Squad", cost: 100 },
-            { name: "Ancient", cost: 50 },
-            { name: "Apothecary", cost: 50 },
-            { name: "Assault Intercessor Squad", cost: 75 },
-            { name: "Ballistus Dreadnought", cost: 140 },
-            { name: "Bladeguard Veteran Squad", cost: 80 },
-            { name: "Brutalis Dreadnought", cost: 160 },
-            { name: "Captain", cost: 80 },
-            { name: "Chaplain", cost: 60 },
-            { name: "Chief Librarian Tigurius", cost: 75 },
-            { name: "Company Heroes", cost: 105 },
-            { name: "Darnath Lysander", cost: 100 },
-            { name: "Desolation Squad", cost: 200 },
-            { name: "Devastator Squad", cost: 120 },
-            { name: "Dreadnought", cost: 135 },
-            { name: "Drop Pod", cost: 70 },
-            { name: "Eliminator Squad", cost: 85 },
-            { name: "Eradicator Squad", cost: 100 },
-            { name: "Gladiator Lancer", cost: 160 },
-            { name: "Gladiator Reaper", cost: 160 },
-            { name: "Gladiator Valiant", cost: 160 },
-            { name: "Heavy Intercessor Squad", cost: 100 },
-            { name: "Hellblaster Squad", cost: 110 },
-            { name: "Impulsor", cost: 80 },
-            { name: "Inceptor Squad", cost: 120 },
-            { name: "Incursor Squad", cost: 80 },
-            { name: "Infernus Squad", cost: 90 },
-            { name: "Infiltrator Squad", cost: 100 },
-            { name: "Intercessor Squad", cost: 80 },
-            { name: "Invader ATV", cost: 60 },
-            { name: "Invictor Tactical Warsuit", cost: 125 },
-            { name: "Iron Father Feirros", cost: 95 },
-            { name: "Judiciar", cost: 70 },
-            { name: "Kayvaan Shrike", cost: 100 },
-            { name: "Kor’sarro Khan", cost: 70 },
-            { name: "Land Raider", cost: 240 },
-            { name: "Land Raider Crusader", cost: 220 },
-            { name: "Land Raider Redeemer", cost: 285 },
-            { name: "Librarian", cost: 65 },
-            { name: "Lieutenant", cost: 65 },
-            { name: "Marneus Calgar", cost: 200 },
-            { name: "Outrider Squad", cost: 80 },
-            { name: "Predator Annihilator", cost: 135 },
-            { name: "Predator Destructor", cost: 140 },
-            { name: "Razorback", cost: 95 },
-            { name: "Redemptor Dreadnought", cost: 210 },
-            { name: "Reiver Squad", cost: 80 },
-            { name: "Repulsor", cost: 180 },
-            { name: "Repulsor Executioner", cost: 220 },
-            { name: "Rhino", cost: 75 },
-            { name: "Roboute Guilliman", cost: 320 },
-            { name: "Scout Squad", cost: 70 },
-            { name: "Sternguard Veteran Squad", cost: 100 },
-            { name: "Storm Speeder Hailstrike", cost: 115 },
-            { name: "Storm Speeder Hammerstrike", cost: 125 },
-            { name: "Storm Speeder Thunderstrike", cost: 150 },
-            { name: "Stormhawk Interceptor", cost: 155 },
-            { name: "Stormraven Gunship", cost: 280 },
-            { name: "Stormtalon Gunship", cost: 165 },
-            { name: "Suppressor Squad", cost: 75 },
-            { name: "Tactical Squad", cost: 140 },
-            { name: "Techmarine", cost: 55 },
-            { name: "Terminator Assault Squad", cost: 180 },
-            { name: "Terminator Squad", cost: 170 },
-            { name: "Tor Garadon", cost: 90 },
-            { name: "Uriel Ventris", cost: 95 },
-            { name: "Vanguard Veteran Squad with Jump Packs", cost: 95 },
-            { name: "Vindicator", cost: 185 },
-            { name: "Vulkan He’stan", cost: 100 },
-            { name: "Whirlwind", cost: 190 },
-            { name: "Astraeus", cost: 525 },
-            { name: "Thunderhawk Gunship", cost: 840 }
-        ];
-
         // --- Core Application Logic ---
         function showMessage(message) {
             authMessage.textContent = message;
+        }
+
+        function clearMessage() {
+            messageText.textContent = '';
+            messageBox.classList.add('hidden');
         }
 
         async function saveGroups(playerId) {
@@ -368,16 +301,6 @@
                 renderUI();
             }
         }
-
-        function populateUnitSelect() {
-            unitSelect.innerHTML = '<option value="" disabled selected>Select a unit...</option>';
-            unitsData.forEach((unit) => {
-                const option = document.createElement('option');
-                option.dataset.cost = unit.cost;
-                option.textContent = `${unit.name} (${unit.cost} pts)`;
-                unitSelect.appendChild(option);
-            });
-        }
         
         function renderUI() {
             const selectedGroupId = groupSelect.value;
@@ -493,73 +416,6 @@
             if (selectedGroupId && groups.some(g => g.id === parseInt(selectedGroupId))) {
                 groupSelect.value = selectedGroupId;
             }
-            populateUnitSelect();
-
-            document.querySelectorAll('.action-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const groupId = e.currentTarget.getAttribute('data-group-id');
-                    const unitIndex = e.currentTarget.getAttribute('data-unit-index');
-                    const action = e.currentTarget.getAttribute('data-action');
-                    
-                    if (action === 'delete') {
-                        deleteUnit(groupId, unitIndex);
-                    } else if (action === 'fall') {
-                        moveUnitToFallen(groupId, unitIndex);
-                    }
-                });
-            });
-
-            document.querySelectorAll('.delete-fallen-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const groupId = e.currentTarget.getAttribute('data-group-id');
-                    const unitIndex = e.currentTarget.getAttribute('data-unit-index');
-                    deleteFallenUnit(groupId, unitIndex);
-                });
-            });
-            
-            document.querySelectorAll('.edit-name-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const groupNameElement = e.currentTarget.previousElementSibling;
-                    const groupId = groupNameElement.getAttribute('data-group-id');
-                    
-                    const currentName = groupNameElement.textContent;
-                    
-                    const inputField = document.createElement('input');
-                    inputField.type = 'text';
-                    inputField.value = currentName;
-                    inputField.className = 'text-2xl font-bold text-gray-800 bg-gray-100 rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-indigo-500';
-
-                    const saveButton = document.createElement('button');
-                    saveButton.textContent = 'Save';
-                    saveButton.className = 'ml-2 px-3 py-1 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600';
-
-                    const cancelButton = document.createElement('button');
-                    cancelButton.textContent = 'Cancel';
-                    cancelButton.className = 'ml-2 px-3 py-1 bg-gray-300 text-gray-800 rounded-xl hover:bg-gray-400';
-
-                    const parentDiv = groupNameElement.parentNode;
-                    parentDiv.replaceChild(inputField, groupNameElement);
-                    parentDiv.replaceChild(saveButton, e.currentTarget);
-                    parentDiv.appendChild(cancelButton);
-
-                    inputField.focus();
-
-                    saveButton.addEventListener('click', () => {
-                        editGroupName(groupId, inputField.value);
-                    });
-                    
-                    cancelButton.addEventListener('click', () => {
-                        renderUI();
-                    });
-                });
-            });
-
-            document.querySelectorAll('.delete-group-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const groupId = e.currentTarget.getAttribute('data-group-id');
-                    deleteGroup(groupId);
-                });
-            });
         }
 
         function setupEventListeners() {
@@ -635,21 +491,19 @@
                 e.preventDefault();
 
                 const selectedGroupId = groupSelect.value;
-                const selectedUnitOption = unitSelect.options[unitSelect.selectedIndex];
+                const unitName = unitNameInput.value;
+                const unitCost = parseInt(unitCostInput.value, 10);
                 
                 if (!selectedGroupId) {
                     showMessage("Please select a muster point first.");
                     return;
                 }
-                if (!selectedUnitOption || selectedUnitOption.value === "") {
-                    showMessage("Please select a unit to add.");
+                if (!unitName || isNaN(unitCost)) {
+                    showMessage("Please enter a valid unit name and cost.");
                     return;
                 }
                 
                 const group = groups.find(g => g.id === parseInt(selectedGroupId));
-                const unitName = selectedUnitOption.textContent;
-                const unitCost = parseInt(selectedUnitOption.dataset.cost, 10);
-
                 if (group.pointsUsed + unitCost > group.pointLimit) {
                     showMessage(`Cannot add unit. Adding ${unitCost} points would exceed the group's limit of ${group.pointLimit}.`);
                     return;
@@ -657,29 +511,61 @@
                 
                 addUnit(selectedGroupId, unitName, unitCost);
 
-                // Reset Unit dropdown after a unit is added
-                unitSelect.value = "";
+                unitNameInput.value = "";
+                unitCostInput.value = "";
             });
+            
+            rostersContainer.addEventListener('click', (e) => {
+                const button = e.target.closest('button');
+                if (!button) return;
 
-            closeMessageBtn.addEventListener('click', clearMessage);
+                const groupId = button.getAttribute('data-group-id');
+                const unitIndex = button.getAttribute('data-unit-index');
+                const action = button.getAttribute('data-action');
 
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentPlayerId = user.uid;
-                    userIdSpan.textContent = currentPlayerId;
-                    loginPage.classList.add('hidden');
-                    rosterAppPage.classList.remove('hidden');
-                    loadGroups(currentPlayerId);
-                } else {
-                    loginPage.classList.remove('hidden');
-                    rosterAppPage.classList.add('hidden');
-                    groups = [];
-                    currentPlayerId = null;
-                    renderUI();
+                if (action === 'delete') {
+                    deleteUnit(groupId, unitIndex);
+                } else if (action === 'fall') {
+                    moveUnitToFallen(groupId, unitIndex);
+                } else if (button.classList.contains('delete-group-btn')) {
+                    deleteGroup(groupId);
+                } else if (button.classList.contains('edit-name-btn')) {
+                    const groupNameElement = button.previousElementSibling;
+                    const currentName = groupNameElement.textContent;
+                    
+                    const inputField = document.createElement('input');
+                    inputField.type = 'text';
+                    inputField.value = currentName;
+                    inputField.className = 'text-2xl font-bold text-gray-800 bg-gray-100 rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-indigo-500';
+
+                    const saveButton = document.createElement('button');
+                    saveButton.textContent = 'Save';
+                    saveButton.className = 'ml-2 px-3 py-1 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600';
+
+                    const cancelButton = document.createElement('button');
+                    cancelButton.textContent = 'Cancel';
+                    cancelButton.className = 'ml-2 px-3 py-1 bg-gray-300 text-gray-800 rounded-xl hover:bg-gray-400';
+
+                    const parentDiv = groupNameElement.parentNode;
+                    parentDiv.replaceChild(inputField, groupNameElement);
+                    parentDiv.replaceChild(saveButton, button);
+                    parentDiv.appendChild(cancelButton);
+
+                    inputField.focus();
+
+                    saveButton.addEventListener('click', () => {
+                        editGroupName(groupId, inputField.value);
+                    });
+                    
+                    cancelButton.addEventListener('click', () => {
+                        renderUI();
+                    });
                 }
             });
             
-            populateUnitSelect();
+            closeMessageBtn.addEventListener('click', () => {
+                messageBox.classList.add('hidden');
+            });
         }
 
         // Call the setup function on window load
