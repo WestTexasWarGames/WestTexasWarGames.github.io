@@ -143,58 +143,19 @@
         // IMPORTANT: Replace these placeholder values with your actual project's credentials.
         // You can find these in your Firebase project settings under "Project settings" -> "General"
         // and scroll down to "Your apps".
-const firebaseConfig = {
-  apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
-  authDomain: "conquest-command-deck.firebaseapp.com",
-  projectId: "conquest-command-deck",
-  storageBucket: "conquest-command-deck.firebasestorage.app",
-  messagingSenderId: "993959061285",
-  appId: "1:993959061285:web:438296814ad21edc0b1ccc",
-  measurementId: "G-87NN5SXHXB"
-};
-        
-        let app, db, auth;
-        let groups = [];
-        let nextGroupId = 0;
-        let currentPlayerId = null;
-
-        window.onload = async function() {
-            try {
-                // Initialize Firebase app
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                // Set up the authentication state listener
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentPlayerId = user.uid;
-                        userIdSpan.textContent = currentPlayerId;
-                        loginPage.classList.add('hidden');
-                        rosterAppPage.classList.remove('hidden');
-                        loadGroups(currentPlayerId);
-                    } else {
-                        loginPage.classList.remove('hidden');
-                        rosterAppPage.classList.add('hidden');
-                        groups = [];
-                        currentPlayerId = null;
-                        renderUI();
-                    }
-                });
-
-                // Set up event listeners after Firebase initialization
-                setupEventListeners();
-                
-                // Populate dropdowns on initial load
-                populateFactionSelect();
-                populateDetachmentSelect();
-                populateUnitSelect();
-
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                showMessage(`Failed to initialize the app: ${error.message}`);
-            }
+        const firebaseConfig = {
+            apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
+            authDomain: "conquest-command-deck.firebaseapp.com",
+            projectId: "conquest-command-deck",
+            storageBucket: "conquest-command-deck.firebasestorage.app",
+            messagingSenderId: "993959061285",
+            appId: "1:993959061285:web:438296814ad21edc0b1ccc",
+            measurementId: "G-87NN5SXHXB"
         };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
 
         // --- DOM Element References ---
         const loginPage = document.getElementById('login-page');
@@ -225,6 +186,11 @@ const firebaseConfig = {
         const messageText = document.getElementById('message-text');
         const closeMessageBtn = document.getElementById('close-message');
         
+        // --- Core Data Model ---
+        let groups = [];
+        let nextGroupId = 0;
+        let currentPlayerId = null;
+
         // Re-structured units data with factions and chapters.
         const factionsData = {
             "Adeptus Astartes": {
