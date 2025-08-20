@@ -122,20 +122,15 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // --- Your Firebase project configuration ---
-        // IMPORTANT: Replace these placeholder values with your actual project's credentials.
-        // You can find these in your Firebase project settings under "Project settings" -> "General"
-        // and scroll down to "Your apps".
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
-  authDomain: "conquest-command-deck.firebaseapp.com",
-  projectId: "conquest-command-deck",
-  storageBucket: "conquest-command-deck.firebasestorage.app",
-  messagingSenderId: "993959061285",
-  appId: "1:993959061285:web:438296814ad21edc0b1ccc",
-  measurementId: "G-87NN5SXHXB"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
+            authDomain: "conquest-command-deck.firebaseapp.com",
+            projectId: "conquest-command-deck",
+            storageBucket: "conquest-command-deck.firebasestorage.app",
+            messagingSenderId: "993959061285",
+            appId: "1:993959061285:web:438296814ad21edc0b1ccc",
+            measurementId: "G-87NN5SXHXB"
+        };
         
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -165,7 +160,7 @@ const firebaseConfig = {
         const messageBox = document.getElementById('message-box');
         const messageText = document.getElementById('message-text');
         const closeMessageBtn = document.getElementById('close-message');
-
+        
         // --- Core Data Model ---
         let groups = [];
         let nextGroupId = 0;
@@ -250,18 +245,12 @@ const firebaseConfig = {
 
         // --- Core Application Logic ---
         function showMessage(message) {
-            messageText.textContent = message;
-            messageBox.classList.remove('hidden');
-        }
-
-        function clearMessage() {
-            messageText.textContent = '';
-            messageBox.classList.add('hidden');
+            authMessage.textContent = message;
         }
 
         async function saveGroups(playerId) {
             if (!playerId) return;
-            const playerDocRef = doc(db, `rosters/${playerId}`);
+            const playerDocRef = doc(db, `rosters`, playerId);
             try {
                 await setDoc(playerDocRef, { groups: groups });
             } catch (error) {
@@ -272,7 +261,7 @@ const firebaseConfig = {
 
         function loadGroups(playerId) {
             if (!playerId) return;
-            const playerDocRef = doc(db, `rosters/${playerId}`);
+            const playerDocRef = doc(db, `rosters`, playerId);
             onSnapshot(playerDocRef, (doc) => {
                 if (doc.exists()) {
                     groups = doc.data().groups;
@@ -294,7 +283,6 @@ const firebaseConfig = {
                 pointsUsed: 0,
                 units: [],
                 fallenUnits: [],
-                detachment: '',
             };
             groups.push(newGroup);
             saveGroups(currentPlayerId);
@@ -675,7 +663,6 @@ const firebaseConfig = {
 
             closeMessageBtn.addEventListener('click', clearMessage);
 
-            // This block handles the sign-in logic
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     currentPlayerId = user.uid;
@@ -701,3 +688,4 @@ const firebaseConfig = {
     </script>
 </body>
 </html>
+
