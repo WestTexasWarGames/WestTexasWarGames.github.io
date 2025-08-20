@@ -152,7 +152,7 @@
             appId: "1:993959061285:web:438296814ad21edc0b1ccc",
             measurementId: "G-87NN5SXHXB"
         };
-
+        
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -630,7 +630,7 @@
 
         async function saveGroups(playerId) {
             if (!playerId) return;
-            const playerDocRef = doc(db, `artifacts/${appId}/users/${playerId}`, "roster");
+            const playerDocRef = doc(db, `rosters`, playerId);
             try {
                 await setDoc(playerDocRef, { groups: groups });
             } catch (error) {
@@ -641,7 +641,7 @@
 
         function loadGroups(playerId) {
             if (!playerId) return;
-            const playerDocRef = doc(db, `artifacts/${appId}/users/${playerId}`, "roster");
+            const playerDocRef = doc(db, `rosters`, playerId);
             onSnapshot(playerDocRef, (doc) => {
                 if (doc.exists()) {
                     groups = doc.data().groups;
@@ -1009,6 +1009,40 @@
         }
 
         // --- Event Listeners ---
+        registerBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                showMessage("Please enter an email and password.");
+                return;
+            }
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    showMessage("Registration successful! You are now signed in.");
+                    // User is automatically signed in after creation
+                })
+                .catch((error) => {
+                    showMessage(error.message);
+                });
+        });
+
+        signInBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            if (!email || !password) {
+                showMessage("Please enter an email and password.");
+                return;
+            }
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    showMessage("Sign in successful!");
+                    // User is automatically signed in
+                })
+                .catch((error) => {
+                    showMessage(error.message);
+                });
+        });
+
         signOutBtn.addEventListener('click', () => {
             signOut(auth)
                 .then(() => {
