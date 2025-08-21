@@ -63,6 +63,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const addRedPlanetBtn = document.getElementById('add-red-planet-btn');
     const addGoldPlanetBtn = document.getElementById('add-gold-planet-btn');
 
+    const factionSelect = document.getElementById('faction-select');
+    const detachmentSelect = document.getElementById('detachment-select');
+    const unitSelect = document.getElementById('unit-select');
+    const addUnitForm = document.getElementById('add-unit-form');
+    const fallenList = document.querySelector('.fallen-list');
+
     let currentUserId = null;
     let factionsData = {};
 
@@ -148,103 +154,56 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
-        const renderLocations = (locations, locationType) => {
-            const locationContainer = document.createElement('div');
-            locationContainer.className = `locations-group ${locationType}`;
+        const renderLocationContainer = (doc, list) => {
+            const location = doc.data();
+            const li = document.createElement('li');
+            li.className = 'locations-container';
+            li.dataset.locationId = doc.id;
+            li.dataset.locationType = location.type + 's';
             
-            locations.forEach(doc => {
-                const location = doc.data();
-                const container = document.createElement('div');
-                container.className = 'locations-container';
-                container.dataset.locationId = doc.id;
-                container.dataset.locationType = location.type + 's';
-                
-                container.innerHTML = `
-                    <div class="location-header">
-                        <input type="text" class="location-name-input" value="${location.name}">
-                        <i class="fas fa-trash-alt delete-loc-btn"></i>
-                    </div>
-                    <h5>Units</h5>
-                    <form class="add-unit-form">
-                        <select class="detachment-select"></select>
-                        <select class="unit-select" disabled></select>
-                        <button type="submit">Add Unit</button>
-                    </form>
-                    <ul class="roster-list unit-list"></ul>
-                    <div class="fallen-log">
-                        <h5>The Fallen</h5>
-                        <ul class="roster-list fallen-list"></ul>
-                    </div>
-                `;
-                rosterGrid.appendChild(container);
+            li.innerHTML = `
+                <div class="location-header">
+                    <input type="text" class="location-name-input" value="${location.name}">
+                    <i class="fas fa-trash-alt delete-loc-btn"></i>
+                </div>
+                <h5>Units</h5>
+                <ul class="roster-list unit-list"></ul>
+                <div class="fallen-log">
+                    <h5>The Fallen</h5>
+                    <ul class="roster-list fallen-list"></ul>
+                </div>
+            `;
+            list.appendChild(li);
 
-                const nameInput = container.querySelector('.location-name-input');
-                nameInput.addEventListener('change', async (e) => {
-                    await db.collection('rosters').doc(currentUserId).collection(location.type + 's').doc(doc.id).update({ name: e.target.value });
+            const nameInput = li.querySelector('.location-name-input');
+            nameInput.addEventListener('change', async (e) => {
+                await db.collection('rosters').doc(currentUserId).collection(location.type + 's').doc(doc.id).update({ name: e.target.value });
+            });
+
+            const deleteBtn = li.querySelector('.delete-loc-btn');
+            deleteBtn.addEventListener('click', () => {
+                deleteLocation(doc.id, location.type);
+            });
+            
+            const unitList = li.querySelector('.unit-list');
+            const fallenList = li.querySelector('.fallen-list');
+
+            db.collection('rosters').doc(currentUserId).collection(location.type + 's').doc(doc.id).collection('units').onSnapshot(snapshot => {
+                unitList.innerHTML = '';
+                snapshot.forEach(unitDoc => {
+                    renderUnit(unitDoc, unitList, container);
                 });
+            });
 
-                const deleteBtn = container.querySelector('.delete-loc-btn');
-                deleteBtn.addEventListener('click', () => {
-                    deleteLocation(doc.id, location.type);
-                });
-
-                const detachmentSelect = container.querySelector('.detachment-select');
-                const unitSelect = container.querySelector('.unit-select');
-                const addUnitForm = container.querySelector('.add-unit-form');
-                const unitList = container.querySelector('.unit-list');
-                const fallenList = container.querySelector('.fallen-list');
-
-                db.collection('rosters').doc(currentUserId).collection('detachments').onSnapshot(snapshot => {
-                    detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
-                    snapshot.forEach(detachmentDoc => {
-                        const option = document.createElement('option');
-                        option.value = detachmentDoc.id;
-                        option.textContent = detachmentDoc.data().name;
-                        detachmentSelect.appendChild(option);
-                    });
-                });
-
-                detachmentSelect.addEventListener('change', async (e) => {
-                    const selectedDetachmentId = e.target.value;
-                    if (selectedDetachmentId) {
-                        const detachmentDoc = await db.collection('rosters').doc(currentUserId).collection('detachments').doc(selectedDetachmentId).get();
-                        const factionId = detachmentDoc.data().factionId;
-                        if (factionId && factionsData[factionId]) {
-                            const unitsSnapshot = await db.collection('gameData').collection('factions').doc(factionId).collection('units').get();
-                            unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
-                            unitsSnapshot.forEach(unitDoc => {
-                                const option = document.createElement('option');
-                                option.value = unitDoc.id;
-                                option.textContent = unitDoc.data().name;
-                                unitSelect.appendChild(option);
-                            });
-                            unitSelect.disabled = false;
-                        }
-                    } else {
-                        unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
-                        unitSelect.disabled = true;
-                    }
-                });
-
-                addUnitForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    if (!unitSelect.value) return;
-                    await db.collection('rosters').doc(currentUserId).collection(location.type + 's').doc(doc.id).collection('units').add({
-                        name: unitSelect.options[unitSelect.selectedIndex].text,
-                        detachmentId: detachmentSelect.value
-                    });
-                });
-                
-                db.collection('rosters').doc(currentUserId).collection(location.type + 's').doc(doc.id).collection('units').onSnapshot(snapshot => {
-                    unitList.innerHTML = '';
-                    snapshot.forEach(unitDoc => {
-                        renderUnit(unitDoc, unitList, container);
-                    });
+            db.collection('rosters').doc(currentUserId).collection('the_fallen').onSnapshot(snapshot => {
+                fallenList.innerHTML = '';
+                snapshot.forEach(fallenDoc => {
+                    renderFallenUnit(fallenDoc, fallenList);
                 });
             });
         };
 
-        const renderUnit = (doc, parentList, locationContainer) => {
+        const renderUnit = (doc, parentList) => {
             const unit = doc.data();
             const li = document.createElement('li');
             li.className = 'unit-item';
@@ -284,42 +243,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const setupRosterListener = () => {
             if (!currentUserId) return;
-            rosterGrid.innerHTML = ''; // Clear the grid for re-rendering
+            const shipsList = document.getElementById('ships-list');
+            const planetsList = document.getElementById('planets-list');
 
-            db.collection('rosters').doc(currentUserId).collection('planets').onSnapshot(snapshot => {
-                const existingPlanetsContainer = rosterGrid.querySelector('.planets-group');
-                if (existingPlanetsContainer) {
-                    existingPlanetsContainer.remove();
-                }
-                const planetsContainer = document.createElement('div');
-                planetsContainer.id = "planets-container";
-                planetsContainer.className = 'locations-container planets-group';
-                planetsContainer.innerHTML = '<h3>Planets</h3><ul class="roster-list unit-list" data-location-id="planets" data-location-type="planets"></ul>';
-                rosterGrid.appendChild(planetsContainer);
-                
-                const planetsList = planetsContainer.querySelector('.roster-list');
-                planetsList.innerHTML = '';
-                snapshot.forEach(doc => {
-                    renderUnit(doc, planetsList);
-                });
-            });
-            
             db.collection('rosters').doc(currentUserId).collection('ships').onSnapshot(snapshot => {
-                const existingShipsContainer = rosterGrid.querySelector('.ships-group');
-                if (existingShipsContainer) {
-                    existingShipsContainer.remove();
-                }
-                const shipsContainer = document.createElement('div');
-                shipsContainer.id = "ships-container";
-                shipsContainer.className = 'locations-container ships-group';
-                shipsContainer.innerHTML = '<h3>Ships</h3><ul class="roster-list unit-list" data-location-id="ships" data-location-type="ships"></ul>';
-                rosterGrid.appendChild(shipsContainer);
-                
-                const shipsList = shipsContainer.querySelector('.roster-list');
                 shipsList.innerHTML = '';
-                snapshot.forEach(doc => {
-                    renderUnit(doc, shipsList);
+                snapshot.forEach(doc => renderLocationContainer(doc, shipsList));
+            });
+            db.collection('rosters').doc(currentUserId).collection('planets').onSnapshot(snapshot => {
+                planetsList.innerHTML = '';
+                snapshot.forEach(doc => renderLocationContainer(doc, planetsList));
+            });
+
+            factionSelect.addEventListener('change', async () => {
+                const selectedFactionId = factionSelect.value;
+                if (!selectedFactionId) {
+                    detachmentSelect.disabled = true;
+                    detachmentSelect.innerHTML = '<option value="">-- Choose a Detachment --</option>';
+                    unitSelect.disabled = true;
+                    unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
+                    return;
+                }
+                const factionsSnapshot = await db.collection('rosters').doc(currentUserId).collection('detachments').where('factionId', '==', selectedFactionId).get();
+                detachmentSelect.innerHTML = '<option value="">-- Choose a Detachment --</option>';
+                factionsSnapshot.forEach(doc => {
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = doc.data().name;
+                    detachmentSelect.appendChild(option);
                 });
+                detachmentSelect.disabled = false;
+            });
+
+            detachmentSelect.addEventListener('change', async () => {
+                const selectedDetachmentId = detachmentSelect.value;
+                if (!selectedDetachmentId) {
+                    unitSelect.disabled = true;
+                    unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
+                    return;
+                }
+                const unitsSnapshot = await db.collection('gameData').collection('factions').doc(factionSelect.value).collection('units').get();
+                unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
+                unitsSnapshot.forEach(doc => {
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = doc.data().name;
+                    unitSelect.appendChild(option);
+                });
+                unitSelect.disabled = false;
+            });
+
+            addUnitForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const unitName = unitSelect.options[unitSelect.selectedIndex].text;
+                if (!unitName) {
+                    alert('Please select a unit.');
+                    return;
+                }
+                const detachmentId = detachmentSelect.value;
+                if (!detachmentId) {
+                    alert('Please select a detachment.');
+                    return;
+                }
+                await db.collection('rosters').doc(currentUserId).collection('detachments').doc(detachmentId).collection('units').add({ name: unitName });
             });
         };
 
@@ -331,7 +317,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (addGoldPlanetBtn) addGoldPlanetBtn.addEventListener('click', () => addNewLocation('Gold Planet', 'planet'));
 
         let draggedUnit = null;
-
         document.addEventListener('dragstart', (e) => {
             if (e.target.classList.contains('unit-item')) {
                 draggedUnit = e.target;
@@ -339,7 +324,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.dataTransfer.effectAllowed = 'move';
             }
         });
-
         document.addEventListener('dragover', (e) => {
             const targetList = e.target.closest('.unit-list');
             if (targetList && !targetList.classList.contains('fallen-list')) {
@@ -347,14 +331,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 targetList.classList.add('drag-over');
             }
         });
-
         document.addEventListener('dragleave', (e) => {
             const targetList = e.target.closest('.unit-list');
             if (targetList) {
                 targetList.classList.remove('drag-over');
             }
         });
-
         document.addEventListener('drop', async (e) => {
             e.preventDefault();
             const dropTarget = e.target.closest('.unit-list');
@@ -364,8 +346,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const currentLocId = draggedUnit.dataset.locationId;
                 const currentLocType = draggedUnit.dataset.locationType;
                 
-                const newLocationId = dropTarget.dataset.locationId;
-                const newLocationType = dropTarget.dataset.locationType;
+                const newLocationLi = dropTarget.closest('.locations-container');
+                const newLocationId = newLocationLi ? newLocationLi.dataset.locationId : null;
+                const newLocationType = newLocationLi ? newLocationLi.dataset.locationType : null;
                 
                 if (newLocationId && newLocationId !== currentLocId) {
                     try {
