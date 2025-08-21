@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
         signupBtn.addEventListener('click', () => {
             const email = emailInput.value;
             const password = passwordInput.value;
-            auth.createUserWithEmailAndPassword(email, password)
+            auth.createUserWithAndPassword(email, password)
                 .then(() => {
                     alert("Account created successfully! You can now log in.");
                 })
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!unitDoc.exists) return;
             const unitData = unitDoc.data();
             
-            const fallenCollection = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen');
+            const fallenCollection = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen');
             await fallenCollection.add(unitData);
             await unitRef.delete();
         };
@@ -226,14 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
                     return;
                 }
-                
-                // Add a log to confirm the query path
-                console.log(`Fetching detachments from path: gameData/${GAME_DATA_DOC_ID}/factions/${selectedFactionId}/detachments`);
                 const detachmentsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(selectedFactionId).collection('detachments').get();
-                
-                // Add a log to check the number of documents returned
-                console.log(`Found ${detachmentsSnapshot.size} detachments.`);
-                
                 detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
                 detachmentsSnapshot.forEach(doc => {
                     const option = document.createElement('option');
@@ -323,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const deleteFallenBtn = li.querySelector('.delete-fallen-btn');
             deleteFallenBtn.addEventListener('click', () => {
-                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').doc(doc.id);
+                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen').doc(doc.id);
                 deleteFallenUnit(fallenRef);
             });
         };
