@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const deleteFallenBtn = li.querySelector('.delete-fallen-btn');
             deleteFallenBtn.addEventListener('click', () => {
-                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').doc(doc.id);
+                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen').doc(doc.id);
                 deleteFallenUnit(fallenRef);
             });
         };
