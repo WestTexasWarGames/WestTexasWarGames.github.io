@@ -56,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get references to HTML elements (Command Deck)
     const logoutBtn = document.getElementById('logout-btn');
     const rosterGrid = document.querySelector('.roster-grid');
-
     const addCruiserBtn = document.getElementById('add-cruiser-btn');
     const addHeavyCruiserBtn = document.getElementById('add-heavy-cruiser-btn');
     const addBattleshipBtn = document.getElementById('add-battleship-btn');
@@ -288,12 +287,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         };
 
-        addCruiserBtn.addEventListener('click', () => addNewLocation('Cruiser', 'ship'));
-        addHeavyCruiserBtn.addEventListener('click', () => addNewLocation('Heavy Cruiser', 'ship'));
-        addBattleshipBtn.addEventListener('click', () => addNewLocation('Battleship', 'ship'));
-        addBluePlanetBtn.addEventListener('click', () => addNewLocation('Blue Planet', 'planet'));
-        addRedPlanetBtn.addEventListener('click', () => addNewLocation('Red Planet', 'planet'));
-        addGoldPlanetBtn.addEventListener('click', () => addNewLocation('Gold Planet', 'planet'));
+        if (addCruiserBtn) addCruiserBtn.addEventListener('click', () => addNewLocation('Cruiser', 'ship'));
+        if (addHeavyCruiserBtn) addHeavyCruiserBtn.addEventListener('click', () => addNewLocation('Heavy Cruiser', 'ship'));
+        if (addBattleshipBtn) addBattleshipBtn.addEventListener('click', () => addNewLocation('Battleship', 'ship'));
+        if (addBluePlanetBtn) addBluePlanetBtn.addEventListener('click', () => addNewLocation('Blue Planet', 'planet'));
+        if (addRedPlanetBtn) addRedPlanetBtn.addEventListener('click', () => addNewLocation('Red Planet', 'planet'));
+        if (addGoldPlanetBtn) addGoldPlanetBtn.addEventListener('click', () => addNewLocation('Gold Planet', 'planet'));
 
         let draggedUnit = null;
 
