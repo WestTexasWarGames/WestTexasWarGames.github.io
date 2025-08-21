@@ -71,6 +71,7 @@ body {
     font-weight: bold;
     width: 100px; /* Adjust to about 1/3 of the size */
     transition: background-color 0.3s ease;
+    text-align: center;
 }
 
 .add-loc-btn:hover {
