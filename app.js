@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
         projectId: "conquest-command-deck",
         storageBucket: "conquest-command-deck.firebasestorage.app",
         messagingSenderId: "993959061285",
-        appId: "1:993959061285:web:438296814ad21edc0b1ccc",
+        appId: "1:993959061285:web:438296814ad21edc0c1ccc",
         measurementId: "G-87NN5SXHXB"
     };
     
@@ -397,3 +397,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
