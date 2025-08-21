@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addBluePlanetBtn = document.getElementById('add-blue-planet-btn');
     const addRedPlanetBtn = document.getElementById('add-red-planet-btn');
     const addGoldPlanetBtn = document.getElementById('add-gold-planet-btn');
-    
+
     let currentUserId = null;
     let factionsData = {};
     const GAME_DATA_DOC_ID = 'conquest'; 
@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const fetchFactionsData = async () => {
             try {
+                // Correct database path for factions
                 const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
                 factionsSnapshot.forEach(doc => {
                     factionsData[doc.id] = doc.data();
@@ -225,7 +226,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
                     return;
                 }
-                const detachmentsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('detachments').where('factionId', '==', selectedFactionId).get();
+                // Correct database path for detachments
+                const detachmentsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(selectedFactionId).collection('detachments').get();
                 detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
                 detachmentsSnapshot.forEach(doc => {
                     const option = document.createElement('option');
@@ -243,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
                     return;
                 }
-                const detachmentDoc = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('detachments').doc(selectedDetachmentId).get();
+                const detachmentDoc = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(factionSelect.value).collection('detachments').doc(selectedDetachmentId).get();
                 const factionId = detachmentDoc.data().factionId;
                 const unitsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(factionId).collection('units').get();
                 unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
@@ -315,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const deleteFallenBtn = li.querySelector('.delete-fallen-btn');
             deleteFallenBtn.addEventListener('click', () => {
-                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen').doc(doc.id);
+                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').doc(doc.id);
                 deleteFallenUnit(fallenRef);
             });
         };
