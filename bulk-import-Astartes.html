@@ -68,8 +68,8 @@
         const db = getFirestore(app);
 
         // --- EDIT THIS SECTION ---
-        // 1. Enter the ID of the faction you want to add units to.
-        const FACTION_ID = "Adeptus Astartes";
+        // 1. Enter the ID of the faction you want to add units to. This ID must match the document ID in your Firestore 'factions' collection.
+        const FACTION_ID = "adeptus_astartes";
 
         // 2. Add your list of units here. Each object should have a 'name' and 'points'.
         const unitsToImport = [
