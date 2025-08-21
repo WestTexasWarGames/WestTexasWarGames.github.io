@@ -64,10 +64,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const addBluePlanetBtn = document.getElementById('add-blue-planet-btn');
     const addRedPlanetBtn = document.getElementById('add-red-planet-btn');
     const addGoldPlanetBtn = document.getElementById('add-gold-planet-btn');
-
+    
     let currentUserId = null;
     let factionsData = {};
-    const GAME_DATA_DOC_ID = 'conquest'; // Consistent document ID for game data
+    const GAME_DATA_DOC_ID = 'conquest'; 
 
     if (logoutBtn) {
         auth.onAuthStateChanged((user) => {
@@ -87,10 +87,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("Logout failed:", error);
             });
         });
-
+        
         const fetchFactionsData = async () => {
             try {
-                // Correct database path for old SDK
                 const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
                 factionsSnapshot.forEach(doc => {
                     factionsData[doc.id] = doc.data();
@@ -117,7 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const deleteLocation = async (locationId, locationType) => {
             if (!currentUserId) return;
             try {
-                // First, find and delete all units within the location
                 const unitsSnapshot = await db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('units').get();
                 const deletePromises = [];
                 unitsSnapshot.forEach(unitDoc => {
@@ -125,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 await Promise.all(deletePromises);
                 
-                // Then, delete the location document itself
                 await db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).delete();
                 locationDetails.innerHTML = `<p class="placeholder-text">Select a ship or planet to view its details.</p>`;
                 console.log("Location and its units deleted successfully.");
@@ -139,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!unitDoc.exists) return;
             const unitData = unitDoc.data();
             
-            const fallenCollection = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen');
+            const fallenCollection = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen');
             await fallenCollection.add(unitData);
             await unitRef.delete();
         };
@@ -228,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
                     return;
                 }
-                const detachmentsSnapshot = await db.collection('rosters').doc(currentUserId).collection('detachments').where('factionId', '==', selectedFactionId).get();
+                const detachmentsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('detachments').where('factionId', '==', selectedFactionId).get();
                 detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
                 detachmentsSnapshot.forEach(doc => {
                     const option = document.createElement('option');
@@ -246,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
                     return;
                 }
-                const detachmentDoc = await db.collection('rosters').doc(currentUserId).collection('detachments').doc(selectedDetachmentId).get();
+                const detachmentDoc = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('detachments').doc(selectedDetachmentId).get();
                 const factionId = detachmentDoc.data().factionId;
                 const unitsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(factionId).collection('units').get();
                 unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
