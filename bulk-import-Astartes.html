@@ -209,7 +209,7 @@
             }
 
             try {
-                const unitsCollectionRef = collection(db, 'gameData', 'factions', FACTION_ID, 'units');
+                const unitsCollectionRef = collection(db, 'gameData', 'conquest', 'factions', FACTION_ID, 'units');
                 const importPromises = unitsToImport.map(unit => {
                     return addDoc(unitsCollectionRef, unit);
                 });
