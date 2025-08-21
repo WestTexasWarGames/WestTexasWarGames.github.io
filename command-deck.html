@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conquest Command Deck</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="header">
@@ -17,66 +18,30 @@
 
         <!-- Buttons for adding specific locations -->
         <div class="add-location-buttons">
-            <button id="add-cruiser-btn" data-name="Cruiser" data-type="ship">+Cruiser</button>
-            <button id="add-heavy-cruiser-btn" data-name="Heavy Cruiser" data-type="ship">+Heavy Cruiser</button>
-            <button id="add-battleship-btn" data-name="Battleship" data-type="ship">+Battleship</button>
-            <button id="add-blue-planet-btn" data-name="Blue Planet" data-type="planet">+Blue Planet</button>
-            <button id="add-red-planet-btn" data-name="Red Planet" data-type="planet">+Red Planet</button>
-            <button id="add-gold-planet-btn" data-name="Gold Planet" data-type="planet">+Gold Planet</button>
+            <div class="column">
+                <button id="add-cruiser-btn" data-name="Cruiser" data-type="ship" class="add-loc-btn">+Cruiser</button>
+                <button id="add-heavy-cruiser-btn" data-name="Heavy Cruiser" data-type="ship" class="add-loc-btn">+Heavy Cruiser</button>
+                <button id="add-battleship-btn" data-name="Battleship" data-type="ship" class="add-loc-btn">+Battleship</button>
+            </div>
+            <div class="column">
+                <button id="add-blue-planet-btn" data-name="Blue Planet" data-type="planet" class="add-loc-btn">+Blue Planet</button>
+                <button id="add-red-planet-btn" data-name="Red Planet" data-type="planet" class="add-loc-btn">+Red Planet</button>
+                <button id="add-gold-planet-btn" data-name="Gold Planet" data-type="planet" class="add-loc-btn">+Gold Planet</button>
+            </div>
         </div>
 
         <div class="roster-grid">
-            <!-- Updated: Faction & Detachment Container -->
-            <div class="faction-container locations-container" id="faction-container">
-                <form id="select-faction-form">
-                    <select id="faction-select">
-                        <option value="">-- Choose a Faction --</option>
-                        <!-- Faction options will be injected here by JavaScript -->
-                    </select>
-                </form>
-
-                <div id="detachments-container">
-                    <select id="detachment-select">
-                        <option value="">-- Choose a Detachment --</option>
-                    </select>
-                    <!-- Form to add units to the selected detachment -->
-                    <form id="add-unit-to-detachment-form">
-                        <select id="unit-select">
-                            <option value="">-- Select a Unit --</option>
-                        </select>
-                        <button type="submit">Add Unit</button>
-                    </form>
-                    <ul id="selected-detachment-units-list" class="roster-list unit-list" data-location-type="detachments">
-                        <!-- Units for the selected detachment will be injected here -->
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Existing: Location Containers -->
-            <div class="locations-container" id="planets-container">
-                <h3>Planets</h3>
-                <!-- The unit-list class will allow this to be a drop target -->
-                <ul id="planets-list" class="roster-list unit-list" data-location-id="planets">
-                    <!-- Planet list items will be injected here by JavaScript -->
-                </ul>
-            </div>
-
-            <div class="locations-container" id="ships-container">
-                <h3>Ships</h3>
-                <!-- The unit-list class will allow this to be a drop target -->
-                <ul id="ships-list" class="roster-list unit-list" data-location-id="ships">
-                    <!-- Ship list items will be injected here -->
-                </ul>
-            </div>
+            <!-- Locations will be dynamically added here by JavaScript -->
         </div>
+
     </div>
 
-    <!-- Step 1: Load Firebase libraries -->
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+    <!-- Load Firebase libraries using standard script tags -->
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
 
-    <!-- Your single app.js script is loaded as a module -->
-    <script type="module" src="app.js"></script>
+    <!-- Load your app's main script -->
+    <script src="app.js"></script>
 </body>
 </html>
