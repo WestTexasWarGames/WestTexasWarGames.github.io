@@ -239,7 +239,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             detachmentSelect.addEventListener('change', async (e) => {
                 const selectedDetachmentId = e.target.value;
-                // Add check to prevent this error
                 if (!selectedDetachmentId) {
                     unitSelect.disabled = true;
                     unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
