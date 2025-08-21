@@ -226,7 +226,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
                     return;
                 }
-                // Correct database path for detachments
                 const detachmentsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(selectedFactionId).collection('detachments').get();
                 detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
                 detachmentsSnapshot.forEach(doc => {
@@ -317,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const deleteFallenBtn = li.querySelector('.delete-fallen-btn');
             deleteFallenBtn.addEventListener('click', () => {
-                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').doc(doc.id);
+                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen').doc(doc.id);
                 deleteFallenUnit(fallenRef);
             });
         };
