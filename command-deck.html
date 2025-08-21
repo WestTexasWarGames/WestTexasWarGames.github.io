@@ -26,16 +26,32 @@
             </form>
         </div>
 
-        <div class="locations-container" id="planets-container">
-            <h3>Planets</h3>
-            <ul id="planets-list" class="roster-list">
-                </ul>
+        <div class="add-unit-container">
+            <h3>Add New Unit</h3>
+            <form id="add-unit-form">
+                <input type="text" id="unit-name-input" placeholder="Unit Name" required>
+                <button type="submit">Create Unit</button>
+            </form>
         </div>
 
-        <div class="locations-container" id="ships-container">
-            <h3>Ships</h3>
-            <ul id="ships-list" class="roster-list">
-                </ul>
+        <div class="roster-grid">
+            <div class="locations-container" id="unit-pool-container">
+                <h3>Unit Pool</h3>
+                <ul id="unit-pool-list" class="roster-list" data-location-id="pool">
+                    </ul>
+            </div>
+
+            <div class="locations-container" id="planets-container">
+                <h3>Planets</h3>
+                <ul id="planets-list" class="roster-list" data-location-id="planets">
+                    </ul>
+            </div>
+
+            <div class="locations-container" id="ships-container">
+                <h3>Ships</h3>
+                <ul id="ships-list" class="roster-list" data-location-id="ships">
+                    </ul>
+            </div>
         </div>
 
     </div>
