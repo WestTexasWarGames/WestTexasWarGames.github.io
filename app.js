@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
         signupBtn.addEventListener('click', () => {
             const email = emailInput.value;
             const password = passwordInput.value;
-            auth.createUserWithAndPassword(email, password)
+            auth.createUserWithEmailAndPassword(email, password)
                 .then(() => {
                     alert("Account created successfully! You can now log in.");
                 })
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!unitDoc.exists) return;
             const unitData = unitDoc.data();
             
-            const fallenCollection = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen');
+            const fallenCollection = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen');
             await fallenCollection.add(unitData);
             await unitRef.delete();
         };
