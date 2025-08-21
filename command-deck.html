@@ -14,31 +14,25 @@
 
     <div class="main-content">
         <h2>Army Roster Management</h2>
-        
-        <div class="location-form-container">
-            <form id="add-location-form">
-                <input type="text" id="location-name-input" placeholder="New Planet or Ship Name" required>
-                <select id="location-type-select">
-                    <option value="planet">Planet</option>
-                    <option value="ship">Ship</option>
-                </select>
-                <button type="submit">Add Location</button>
-            </form>
-        </div>
-
-        <div class="add-unit-container">
-            <h3>Add New Unit</h3>
-            <form id="add-unit-form">
-                <input type="text" id="unit-name-input" placeholder="Unit Name" required>
-                <button type="submit">Create Unit</button>
-            </form>
-        </div>
 
         <div class="roster-grid">
-            <div class="locations-container" id="unit-pool-container">
-                <h3>Unit Pool</h3>
-                <ul id="unit-pool-list" class="roster-list" data-location-id="pool">
-                    </ul>
+            <div class="faction-container locations-container" id="faction-container">
+                <h3>Select Faction</h3>
+                <form id="select-faction-form">
+                    <select id="faction-select">
+                        <option value="">-- Choose a Faction --</option>
+                        </select>
+                </form>
+
+                <div id="detachments-container">
+                    <h4>Detachments</h4>
+                    <form id="add-detachment-form">
+                        <input type="text" id="detachment-name-input" placeholder="New Detachment Name" required>
+                        <button type="submit">Add Detachment</button>
+                    </form>
+                    <ul id="detachments-list" class="roster-list">
+                        </ul>
+                </div>
             </div>
 
             <div class="locations-container" id="planets-container">
@@ -53,7 +47,6 @@
                     </ul>
             </div>
         </div>
-
     </div>
 
     <script type="module" src="command-deck.js"></script>
