@@ -69,7 +69,7 @@ body {
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    width: 100px;
+    width: 200px;
     transition: background-color 0.3s ease;
     text-align: center;
     white-space: nowrap;
@@ -79,71 +79,62 @@ body {
     background-color: #229954;
 }
 
-/* Updated roster grid for two-column layout */
-.roster-grid {
+/* New main layout for tabs and content */
+.main-roster {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 3fr;
     gap: 2rem;
+    min-height: 500px;
 }
 
-.locations-group {
+.sidebar {
     background-color: #34495e;
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    min-height: 250px;
 }
 
+.content-area {
+    background-color: #34495e;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.placeholder-text {
+    text-align: center;
+    margin-top: 5rem;
+    font-size: 1.2rem;
+    color: #bdc3c7;
+}
+
+/* Tab-like styling for collapsed locations */
 .locations-container {
-    background-color: #34495e;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    min-height: 250px;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    margin-bottom: 20px;
-}
-
-/* Collapsible and Header Styles */
-.location-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #3498db;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1.5rem;
-    cursor: pointer; /* Makes the header clickable */
-}
-
-.location-name-input {
-    background: transparent;
-    border: none;
-    color: #ecf0f1;
-    font-size: 1.5rem;
-    font-weight: bold;
-    width: 80%;
-}
-
-.delete-loc-btn {
-    background: transparent;
-    border: none;
-    color: #e74c3c;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 5px;
     cursor: pointer;
-    font-size: 1.5rem;
+    background-color: #4c667a;
+    transition: background-color 0.3s ease;
 }
 
-.roster-list {
+.locations-container:hover {
+    background-color: #5b7994;
+}
+
+.locations-container.active {
+    background-color: #3498db;
+}
+
+/* General styles for unit lists, forms, etc. */
+.unit-list {
     list-style-type: none;
     padding: 0;
     min-height: 50px;
-    transition: all 0.3s ease-out; /* Smooth transition for collapsing */
-    overflow: hidden; /* Hides content when collapsed */
 }
 
 .unit-item {
-    background-color: #4c667a;
+    background-color: #2c3e50;
     padding: 8px;
     border-radius: 5px;
     margin-top: 8px;
@@ -154,13 +145,7 @@ body {
 }
 
 .unit-item:hover {
-    background-color: #5b7994;
-}
-
-.unit-list {
-    min-height: 50px;
-    border: 2px dashed transparent;
-    transition: border-color 0.2s ease;
+    background-color: #34495e;
 }
 
 .unit-list.drag-over {
