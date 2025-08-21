@@ -90,7 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const fetchFactionsData = async () => {
             try {
-                // Correct database path for factions
                 const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
                 factionsSnapshot.forEach(doc => {
                     factionsData[doc.id] = doc.data();
@@ -239,6 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             detachmentSelect.addEventListener('change', async (e) => {
                 const selectedDetachmentId = e.target.value;
+                // Add check to prevent this error
                 if (!selectedDetachmentId) {
                     unitSelect.disabled = true;
                     unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
