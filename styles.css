@@ -65,14 +65,14 @@ body {
     background-color: #27ae60;
     color: white;
     border: none;
-    padding: 15px 25px; /* Increased by 50% */
+    padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    width: 150px; /* Increased by 50% */
+    width: 100px;
     transition: background-color 0.3s ease;
     text-align: center;
-    white-space: nowrap; /* Prevents text from wrapping */
+    white-space: nowrap;
 }
 
 .add-loc-btn:hover {
@@ -82,39 +82,16 @@ body {
 /* Updated roster grid for two-column layout */
 .roster-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 2rem;
 }
 
-/* New styles for faction and unit selectors */
-.faction-unit-selectors {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.locations-group {
     background-color: #34495e;
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.faction-unit-selectors select,
-.faction-unit-selectors button {
-    width: 100%;
-    padding: 8px;
-    border-radius: 5px;
-    border: none;
-}
-
-.faction-unit-selectors select {
-    background-color: #4c667a;
-    color: #ecf0f1;
-}
-
-.faction-unit-selectors button {
-    background-color: #27ae60;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
+    min-height: 250px;
 }
 
 .locations-container {
@@ -126,8 +103,10 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
+    margin-bottom: 20px;
 }
 
+/* Collapsible and Header Styles */
 .location-header {
     display: flex;
     justify-content: space-between;
@@ -135,6 +114,7 @@ body {
     border-bottom: 2px solid #3498db;
     padding-bottom: 0.5rem;
     margin-bottom: 1.5rem;
+    cursor: pointer; /* Makes the header clickable */
 }
 
 .location-name-input {
@@ -158,6 +138,8 @@ body {
     list-style-type: none;
     padding: 0;
     min-height: 50px;
+    transition: all 0.3s ease-out; /* Smooth transition for collapsing */
+    overflow: hidden; /* Hides content when collapsed */
 }
 
 .unit-item {
