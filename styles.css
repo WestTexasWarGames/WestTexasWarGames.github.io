@@ -156,3 +156,45 @@ button:hover {
     font-size: 0.9rem;
     cursor: move; /* Indicates it's draggable */
 }
+
+/* Add these new styles to your existing styles.css file */
+
+.faction-container {
+    grid-column: 1 / -1; /* This makes the faction container span the full width of the grid */
+    margin-bottom: 2rem;
+}
+
+#select-faction-form, #add-detachment-form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+#faction-select {
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4c667a;
+    color: #ecf0f1;
+    flex-grow: 1;
+}
+
+#add-detachment-form input {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 5px;
+    background-color: #4c667a;
+    border: none;
+    color: #ecf0f1;
+}
+
+#add-detachment-form button {
+    padding: 8px 15px;
+}
+
+#detachments-list .detachment-item {
+    background-color: #2c3e50;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+}
