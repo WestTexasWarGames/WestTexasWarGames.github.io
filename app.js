@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoutBtn = document.getElementById('logout-btn');
     const shipsList = document.getElementById('ships-list');
     const planetsList = document.getElementById('planets-list');
+    const locationDetails = document.getElementById('location-details');
     const addCruiserBtn = document.getElementById('add-cruiser-btn');
     const addHeavyCruiserBtn = document.getElementById('add-heavy-cruiser-btn');
     const addBattleshipBtn = document.getElementById('add-battleship-btn');
@@ -65,11 +66,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const addGoldPlanetBtn = document.getElementById('add-gold-planet-btn');
 
     let currentUserId = null;
+    let factionsData = {};
+    const GAME_DATA_DOC_ID = 'conquest'; // Consistent document ID for game data
 
     if (logoutBtn) {
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUserId = user.uid;
+                fetchFactionsData();
                 setupRosterListener();
             } else {
                 window.location.href = 'index.html';
@@ -83,6 +87,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("Logout failed:", error);
             });
         });
+
+        const fetchFactionsData = async () => {
+            try {
+            // Log the path before the database call
+            console.log(`Attempting to fetch data from: gameData/${GAME_DATA_DOC_ID}/factions`);
+            const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
+
+            // ... the rest of the function remains the same ...
+            } catch (error) {
+                console.error("Error fetching factions data:", error);
+             }
+};
 
         const addNewLocation = async (name, type) => {
             if (!currentUserId) return;
@@ -110,80 +126,185 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Then, delete the location document itself
                 await db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).delete();
+                locationDetails.innerHTML = `<p class="placeholder-text">Select a ship or planet to view its details.</p>`;
                 console.log("Location and its units deleted successfully.");
             } catch (error) {
                 console.error("Error deleting location:", error);
             }
         };
-        
-        const renderLocationContainer = (doc, list) => {
+
+        const moveToFallen = async (unitRef, locationId, locationType) => {
+            const unitDoc = await unitRef.get();
+            if (!unitDoc.exists) return;
+            const unitData = unitDoc.data();
+            
+            const fallenCollection = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen');
+            await fallenCollection.add(unitData);
+            await unitRef.delete();
+        };
+
+        const deleteFallenUnit = async (fallenRef) => {
+            try {
+                await fallenRef.delete();
+                console.log("Fallen unit deleted successfully.");
+            } catch (error) {
+                console.error("Error deleting fallen unit:", error);
+            }
+        };
+
+        const renderLocationTabs = (doc, list) => {
             const location = doc.data();
             const li = document.createElement('li');
             li.className = 'locations-container';
             li.dataset.locationId = doc.id;
             li.dataset.locationType = location.type + 's';
-            
-            li.innerHTML = `
+            li.textContent = location.name;
+            list.appendChild(li);
+
+            li.addEventListener('click', () => {
+                document.querySelectorAll('.locations-container').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                li.classList.add('active');
+                renderLocationDetails(doc);
+            });
+        };
+
+        const renderLocationDetails = (doc) => {
+            const location = doc.data();
+            const locationId = doc.id;
+            const locationType = location.type + 's';
+
+            locationDetails.innerHTML = `
                 <div class="location-header">
                     <input type="text" class="location-name-input" value="${location.name}">
                     <i class="fas fa-trash-alt delete-loc-btn"></i>
                 </div>
                 <h5>Units</h5>
-                <ul class="roster-list unit-list"></ul>
+                <form class="add-unit-form">
+                    <select class="faction-select"></select>
+                    <select class="detachment-select" disabled></select>
+                    <select class="unit-select" disabled></select>
+                    <button type="submit">Add Unit</button>
+                </form>
+                <ul class="roster-list unit-list" data-location-id="${locationId}" data-location-type="${locationType}"></ul>
                 <div class="fallen-log">
                     <h5>The Fallen</h5>
                     <ul class="roster-list fallen-list"></ul>
                 </div>
             `;
-            list.appendChild(li);
 
-            const nameInput = li.querySelector('.location-name-input');
+            const nameInput = locationDetails.querySelector('.location-name-input');
             nameInput.addEventListener('change', async (e) => {
-                await db.collection('rosters').doc(currentUserId).collection(location.type + 's').doc(doc.id).update({ name: e.target.value });
+                await db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).update({ name: e.target.value });
             });
 
-            const deleteBtn = li.querySelector('.delete-loc-btn');
+            const deleteBtn = locationDetails.querySelector('.delete-loc-btn');
             deleteBtn.addEventListener('click', () => {
-                deleteLocation(doc.id, location.type);
+                deleteLocation(locationId, location.type);
             });
             
-            const unitList = li.querySelector('.unit-list');
-            const fallenList = li.querySelector('.fallen-list');
+            const factionSelect = locationDetails.querySelector('.faction-select');
+            const detachmentSelect = locationDetails.querySelector('.detachment-select');
+            const unitSelect = locationDetails.querySelector('.unit-select');
+            const addUnitForm = locationDetails.querySelector('.add-unit-form');
+            const unitList = locationDetails.querySelector('.unit-list');
+            const fallenList = locationDetails.querySelector('.fallen-list');
 
-            // Listen for units in this location
-            db.collection('rosters').doc(currentUserId).collection(location.type + 's').doc(doc.id).collection('units').onSnapshot(snapshot => {
-                unitList.innerHTML = '';
-                snapshot.forEach(unitDoc => {
-                    renderUnit(unitDoc, unitList);
+            for (const factionId in factionsData) {
+                const option = document.createElement('option');
+                option.value = factionId;
+                option.textContent = factionsData[factionId].name;
+                factionSelect.appendChild(option);
+            }
+
+            factionSelect.addEventListener('change', async (e) => {
+                const selectedFactionId = e.target.value;
+                if (!selectedFactionId) {
+                    detachmentSelect.disabled = true;
+                    detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
+                    unitSelect.disabled = true;
+                    unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+                    return;
+                }
+                const detachmentsSnapshot = await db.collection('rosters').doc(currentUserId).collection('detachments').where('factionId', '==', selectedFactionId).get();
+                detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
+                detachmentsSnapshot.forEach(doc => {
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = doc.data().name;
+                    detachmentSelect.appendChild(option);
+                });
+                detachmentSelect.disabled = false;
+            });
+
+            detachmentSelect.addEventListener('change', async (e) => {
+                const selectedDetachmentId = e.target.value;
+                if (!selectedDetachmentId) {
+                    unitSelect.disabled = true;
+                    unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+                    return;
+                }
+                const detachmentDoc = await db.collection('rosters').doc(currentUserId).collection('detachments').doc(selectedDetachmentId).get();
+                const factionId = detachmentDoc.data().factionId;
+                const unitsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(factionId).collection('units').get();
+                unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+                unitsSnapshot.forEach(unitDoc => {
+                    const option = document.createElement('option');
+                    option.value = unitDoc.id;
+                    option.textContent = unitDoc.data().name;
+                    unitSelect.appendChild(option);
+                });
+                unitSelect.disabled = false;
+            });
+
+            addUnitForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!unitSelect.value) return;
+                await db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').add({
+                    name: unitSelect.options[unitSelect.selectedIndex].text,
+                    detachmentId: detachmentSelect.value,
                 });
             });
 
-            // Listen for fallen units
-            db.collection('rosters').doc(currentUserId).collection('the_fallen').onSnapshot(snapshot => {
+            db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').onSnapshot(snapshot => {
+                unitList.innerHTML = '';
+                snapshot.forEach(unitDoc => {
+                    renderUnit(unitDoc, unitList, locationType, locationId);
+                });
+            });
+
+            db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').onSnapshot(snapshot => {
                 fallenList.innerHTML = '';
                 snapshot.forEach(fallenDoc => {
-                    renderFallenUnit(fallenDoc, fallenList);
+                    renderFallenUnit(fallenDoc, fallenList, locationType, locationId);
                 });
             });
         };
         
-        const renderUnit = (doc, parentList) => {
+        const renderUnit = (doc, parentList, locationType, locationId) => {
             const unit = doc.data();
             const li = document.createElement('li');
             li.className = 'unit-item';
             li.setAttribute('draggable', 'true');
             li.dataset.unitId = doc.id;
-            li.dataset.locationId = doc.ref.parent.parent.id;
-            li.dataset.locationType = doc.ref.parent.parent.path.split('/')[1];
+            li.dataset.locationId = locationId;
+            li.dataset.locationType = locationType;
 
             li.innerHTML = `
                 <span>${unit.name}</span>
                 <i class="fas fa-skull move-to-fallen-btn"></i>
             `;
             parentList.appendChild(li);
+
+            const moveToFallenBtn = li.querySelector('.move-to-fallen-btn');
+            moveToFallenBtn.addEventListener('click', () => {
+                const unitRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').doc(doc.id);
+                moveToFallen(unitRef, locationId, locationType);
+            });
         };
 
-        const renderFallenUnit = (doc, parentList) => {
+        const renderFallenUnit = (doc, parentList, locationType, locationId) => {
             const unit = doc.data();
             const li = document.createElement('li');
             li.className = 'fallen-item';
@@ -193,6 +314,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <i class="fas fa-trash-alt delete-fallen-btn"></i>
             `;
             parentList.appendChild(li);
+
+            const deleteFallenBtn = li.querySelector('.delete-fallen-btn');
+            deleteFallenBtn.addEventListener('click', () => {
+                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen').doc(doc.id);
+                deleteFallenUnit(fallenRef);
+            });
         };
 
         const setupRosterListener = () => {
@@ -200,20 +327,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
             db.collection('rosters').doc(currentUserId).collection('ships').onSnapshot(snapshot => {
                 shipsList.innerHTML = '';
-                snapshot.forEach(doc => renderLocationContainer(doc, shipsList));
+                snapshot.forEach(doc => renderLocationTabs(doc, shipsList));
             });
             db.collection('rosters').doc(currentUserId).collection('planets').onSnapshot(snapshot => {
                 planetsList.innerHTML = '';
-                snapshot.forEach(doc => renderLocationContainer(doc, planetsList));
+                snapshot.forEach(doc => renderLocationTabs(doc, planetsList));
             });
         };
 
-        if (addCruiserBtn) addCruiserBtn.addEventListener('click', () => addNewLocation('Cruiser', 'ship'));
-        if (addHeavyCruiserBtn) addHeavyCruiserBtn.addEventListener('click', () => addNewLocation('Heavy Cruiser', 'ship'));
-        if (addBattleshipBtn) addBattleshipBtn.addEventListener('click', () => addNewLocation('Battleship', 'ship'));
-        if (addBluePlanetBtn) addBluePlanetBtn.addEventListener('click', () => addNewLocation('Blue Planet', 'planet'));
-        if (addRedPlanetBtn) addRedPlanetBtn.addEventListener('click', () => addNewLocation('Red Planet', 'planet'));
-        if (addGoldPlanetBtn) addGoldPlanetBtn.addEventListener('click', () => addNewLocation('Gold Planet', 'planet'));
+        addCruiserBtn.addEventListener('click', () => addNewLocation('Cruiser', 'ship'));
+        addHeavyCruiserBtn.addEventListener('click', () => addNewLocation('Heavy Cruiser', 'ship'));
+        addBattleshipBtn.addEventListener('click', () => addNewLocation('Battleship', 'ship'));
+        addBluePlanetBtn.addEventListener('click', () => addNewLocation('Blue Planet', 'planet'));
+        addRedPlanetBtn.addEventListener('click', () => addNewLocation('Red Planet', 'planet'));
+        addGoldPlanetBtn.addEventListener('click', () => addNewLocation('Gold Planet', 'planet'));
 
         let draggedUnit = null;
 
@@ -227,7 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.addEventListener('dragover', (e) => {
             const targetList = e.target.closest('.unit-list');
-            if (targetList) {
+            if (targetList && !targetList.closest('.fallen-log')) {
                 e.preventDefault();
                 targetList.classList.add('drag-over');
             }
@@ -249,9 +376,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const currentLocId = draggedUnit.dataset.locationId;
                 const currentLocType = draggedUnit.dataset.locationType;
                 
-                const newLocationContainer = dropTarget.closest('.locations-container');
-                const newLocationId = newLocationContainer ? newLocationContainer.dataset.locationId : null;
-                const newLocationType = newLocationContainer ? newLocationContainer.dataset.locationType : null;
+                const newLocationContainer = dropTarget.closest('.content-area');
+                const newLocationId = newLocationContainer ? newLocationContainer.querySelector('.unit-list').dataset.locationId : null;
+                const newLocationType = newLocationContainer ? newLocationContainer.querySelector('.unit-list').dataset.locationType : null;
                 
                 if (newLocationId && newLocationId !== currentLocId) {
                     try {
