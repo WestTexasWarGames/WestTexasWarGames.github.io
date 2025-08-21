@@ -90,15 +90,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const fetchFactionsData = async () => {
             try {
-            // Log the path before the database call
-            console.log(`Attempting to fetch data from: gameData/${GAME_DATA_DOC_ID}/factions`);
-            const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
-
-            // ... the rest of the function remains the same ...
+                // Correct database path for old SDK
+                const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
+                factionsSnapshot.forEach(doc => {
+                    factionsData[doc.id] = doc.data();
+                });
+                console.log("Factions data fetched successfully.");
             } catch (error) {
                 console.error("Error fetching factions data:", error);
-             }
-};
+            }
+        };
 
         const addNewLocation = async (name, type) => {
             if (!currentUserId) return;
@@ -317,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const deleteFallenBtn = li.querySelector('.delete-fallen-btn');
             deleteFallenBtn.addEventListener('click', () => {
-                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen').doc(doc.id);
+                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').doc(doc.id);
                 deleteFallenUnit(fallenRef);
             });
         };
