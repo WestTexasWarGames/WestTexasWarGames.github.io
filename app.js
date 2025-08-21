@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
         signupBtn.addEventListener('click', () => {
             const email = emailInput.value;
             const password = passwordInput.value;
-            auth.createUserWithEmailAndPassword(email, password)
+            auth.createUserWithAndPassword(email, password)
                 .then(() => {
                     alert("Account created successfully! You can now log in.");
                 })
