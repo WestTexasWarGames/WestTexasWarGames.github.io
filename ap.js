@@ -1,5 +1,17 @@
-// A single, unified JavaScript file to handle all functionality.
-// This file assumes the Firebase libraries are loaded via script tags in the HTML.
+// A single, unified JavaScript file to handle all functionality
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { 
+    getFirestore, 
+    collection, 
+    onSnapshot, 
+    addDoc, 
+    doc, 
+    getDocs,
+    setDoc,
+    updateDoc,
+    deleteDoc
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -13,9 +25,9 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 // Get references to HTML elements (Login Page)
 const loginBtn = document.getElementById('login-btn');
@@ -28,7 +40,7 @@ if (loginBtn && signupBtn) {
     loginBtn.addEventListener('click', () => {
         const email = emailInput.value;
         const password = passwordInput.value;
-        auth.signInWithEmailAndPassword(email, password)
+        signInWithEmailAndPassword(auth, email, password)
             .then(() => {
                 window.location.href = 'command-deck.html';
             })
@@ -41,7 +53,7 @@ if (loginBtn && signupBtn) {
     signupBtn.addEventListener('click', () => {
         const email = emailInput.value;
         const password = passwordInput.value;
-        auth.createUserWithEmailAndPassword(email, password)
+        createUserWithEmailAndPassword(auth, email, password)
             .then(() => {
                 alert("Account created successfully! You can now log in.");
             })
@@ -72,7 +84,7 @@ let currentUserId = null;
 
 if (logoutBtn) {
     // --- Authentication and Redirection ---
-    auth.onAuthStateChanged((user) => {
+    onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUserId = user.uid;
             fetchFactionsAndPopulateSelect();
@@ -84,7 +96,7 @@ if (logoutBtn) {
 
     // Handle the logout process
     logoutBtn.addEventListener('click', () => {
-        auth.signOut().then(() => {
+        signOut(auth).then(() => {
             window.location.href = 'index.html';
         }).catch((error) => {
             console.error("Logout failed:", error);
@@ -94,7 +106,7 @@ if (logoutBtn) {
     // --- Firestore Database Logic ---
     const fetchFactionsAndPopulateSelect = async () => {
         try {
-            const factionsSnapshot = await db.collection('gameData').doc('version_1').collection('factions').get();
+            const factionsSnapshot = await getDocs(collection(db, 'gameData', 'factions'));
             factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
             factionsSnapshot.forEach((doc) => {
                 const option = document.createElement('option');
@@ -110,7 +122,7 @@ if (logoutBtn) {
     factionSelect.addEventListener('change', async () => {
         if (!currentUserId) return;
         const selectedFactionId = factionSelect.value;
-        await db.collection('rosters').doc(currentUserId).set({ factionId: selectedFactionId }, { merge: true });
+        await setDoc(doc(db, 'rosters', currentUserId), { factionId: selectedFactionId }, { merge: true });
         
         if (selectedFactionId) {
             await fetchUnitsForFaction(selectedFactionId);
@@ -126,13 +138,12 @@ if (logoutBtn) {
             return;
         }
         selectedDetachmentUnitsList.dataset.locationId = selectedDetachmentId;
-        db.collection('rosters').doc(currentUserId).collection('detachments').doc(selectedDetachmentId).collection('units')
-            .onSnapshot((unitSnapshot) => {
-                selectedDetachmentUnitsList.innerHTML = '';
-                unitSnapshot.forEach(unitDoc => {
-                    renderUnit(unitDoc, selectedDetachmentUnitsList);
-                });
+        onSnapshot(collection(db, 'rosters', currentUserId, 'detachments', selectedDetachmentId, 'units'), (unitSnapshot) => {
+            selectedDetachmentUnitsList.innerHTML = '';
+            unitSnapshot.forEach(unitDoc => {
+                renderUnit(unitDoc, selectedDetachmentUnitsList);
             });
+        });
     });
 
     addUnitToDetachmentForm.addEventListener('submit', async (e) => {
@@ -149,7 +160,7 @@ if (logoutBtn) {
             alert("Please select a unit to add.");
             return;
         }
-        await db.collection('rosters').doc(currentUserId).collection('detachments').doc(selectedDetachmentId).collection('units').add({
+        await addDoc(collection(db, 'rosters', currentUserId, 'detachments', selectedDetachmentId, 'units'), {
             name: unitName,
             locationType: 'detachments',
             locationId: selectedDetachmentId
@@ -159,7 +170,7 @@ if (logoutBtn) {
 
     const fetchUnitsForFaction = async (factionId) => {
         try {
-            const unitsSnapshot = await db.collection('gameData').doc('version_1').collection('factions').doc(factionId).collection('units').get();
+            const unitsSnapshot = await getDocs(collection(db, 'gameData', 'factions', factionId, 'units'));
             unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
             unitsSnapshot.forEach((doc) => {
                 const unit = doc.data();
@@ -175,7 +186,7 @@ if (logoutBtn) {
 
     const addNewLocation = async (name, type) => {
         if (!currentUserId) return;
-        await db.collection('rosters').doc(currentUserId).collection(type + 's').add({
+        await addDoc(collection(db, 'rosters', currentUserId, type + 's'), {
             name: name,
             type: type,
         });
@@ -227,12 +238,12 @@ if (logoutBtn) {
             
             if (newLocationId && newLocationId !== currentLocId) {
                 try {
-                    await db.collection('rosters').doc(currentUserId).collection(newLocationType).doc(newLocationId).collection('units').add({
+                    await addDoc(collection(db, 'rosters', currentUserId, newLocationType, newLocationId, 'units'), {
                         name: draggedUnit.textContent,
                         locationType: newLocationType,
                         locationId: newLocationId
                     });
-                    await db.collection('rosters').doc(currentUserId).collection(currentLocType).doc(currentLocId).collection('units').doc(unitId).delete();
+                    await deleteDoc(doc(db, 'rosters', currentUserId, currentLocType, currentLocId, 'units', unitId));
                 } catch (error) {
                     console.error("Error moving unit:", error);
                 }
@@ -255,14 +266,13 @@ if (logoutBtn) {
         } else if (location.type === 'ship') {
             shipsList.appendChild(li);
         }
-        db.collection('rosters').doc(currentUserId).collection(`${location.type}s`).doc(doc.id).collection('units')
-            .onSnapshot((unitSnapshot) => {
-                const unitList = li.querySelector('.unit-list');
-                unitList.innerHTML = '';
-                unitSnapshot.forEach(unitDoc => {
-                    renderUnit(unitDoc, unitList);
-                });
+        onSnapshot(collection(db, 'rosters', currentUserId, `${location.type}s`, doc.id, 'units'), (unitSnapshot) => {
+            const unitList = li.querySelector('.unit-list');
+            unitList.innerHTML = '';
+            unitSnapshot.forEach(unitDoc => {
+                renderUnit(unitDoc, unitList);
             });
+        });
     };
 
     const renderUnit = (doc, parentList) => {
@@ -280,8 +290,8 @@ if (logoutBtn) {
             deleteButton.textContent = 'x';
             deleteButton.className = 'delete-unit-btn';
             deleteButton.addEventListener('click', async () => {
-                const unitRef = db.collection('rosters').doc(currentUserId).collection('detachments').doc(parentList.dataset.locationId).collection('units').doc(doc.id);
-                await unitRef.delete();
+                const unitRef = doc(db, 'rosters', currentUserId, 'detachments', parentList.dataset.locationId, 'units', doc.id);
+                await deleteDoc(unitRef);
             });
             li.appendChild(deleteButton);
         }
@@ -290,32 +300,29 @@ if (logoutBtn) {
 
     const setupRosterListener = () => {
         if (!currentUserId) return;
-        db.collection('rosters').doc(currentUserId).collection('detachments')
-            .onSnapshot((snapshot) => {
-                detachmentSelect.innerHTML = '<option value="">-- Choose a Detachment --</option>';
-                snapshot.forEach(doc => {
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = doc.data().name;
-                    detachmentSelect.appendChild(option);
-                });
-                selectedDetachmentUnitsList.dataset.locationId = 'detachments';
+        onSnapshot(collection(db, 'rosters', currentUserId, 'detachments'), (snapshot) => {
+            detachmentSelect.innerHTML = '<option value="">-- Choose a Detachment --</option>';
+            snapshot.forEach(doc => {
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = doc.data().name;
+                detachmentSelect.appendChild(option);
             });
+            selectedDetachmentUnitsList.dataset.locationId = 'detachments';
+        });
         
-        db.collection('rosters').doc(currentUserId).collection('planets')
-            .onSnapshot((snapshot) => {
-                planetsList.innerHTML = '';
-                snapshot.forEach(doc => {
-                    renderLocations(doc);
-                });
+        onSnapshot(collection(db, 'rosters', currentUserId, 'planets'), (snapshot) => {
+            planetsList.innerHTML = '';
+            snapshot.forEach(doc => {
+                renderLocations(doc);
             });
+        });
 
-        db.collection('rosters').doc(currentUserId).collection('ships')
-            .onSnapshot((snapshot) => {
-                shipsList.innerHTML = '';
-                snapshot.forEach(doc => {
-                    renderLocations(doc);
-                });
+        onSnapshot(collection(db, 'rosters', currentUserId, 'ships'), (snapshot) => {
+            shipsList.innerHTML = '';
+            snapshot.forEach(doc => {
+                renderLocations(doc);
             });
+        });
     };
 }
