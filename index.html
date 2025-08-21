@@ -20,28 +20,8 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <!-- Login Page -->
-    <div id="login-page" class="bg-white rounded-2xl shadow-xl w-full max-w-xl p-8 space-y-8 text-center">
-        <h1 class="text-4xl font-bold text-gray-800">Welcome to Command Deck</h1>
-        <p class="mt-2 text-lg text-gray-600">Sign in to access your personal roster.</p>
-        
-        <form id="auth-form" class="space-y-4">
-            <input type="email" id="email-input" placeholder="Email" required class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <input type="password" id="password-input" placeholder="Password" required class="w-full p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                <button type="button" id="register-btn" class="flex-grow px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg">
-                    Register
-                </button>
-                <button type="button" id="sign-in-btn" class="flex-grow px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors shadow-lg">
-                    Sign In
-                </button>
-            </div>
-        </form>
-        <p id="auth-message" class="text-sm text-red-500 mt-4"></p>
-    </div>
-
-    <!-- Command Deck Page (Initially Hidden) -->
-    <div id="roster-app-page" class="hidden bg-white rounded-2xl shadow-xl w-full max-w-4xl p-8 space-y-8">
+    <!-- Command Deck Page -->
+    <div id="roster-app-page" class="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-8 space-y-8">
         <header class="text-center">
             <h1 id="command-deck-title" class="text-4xl font-bold text-gray-800">Command Deck</h1>
             <p class="mt-2 text-lg text-gray-600">Organize your groups and units.</p>
@@ -49,7 +29,7 @@
         
         <div class="flex justify-between items-center">
             <div class="text-sm text-gray-600">Your User ID: <span id="user-id" class="font-mono text-gray-800"></span></div>
-            <button id="sign-out-btn" class="px-6 py-3 bg-gray-500 text-white font-semibold rounded-xl shadow-lg hover:bg-gray-600 transition-colors">
+            <button id="sign-out-btn" class="hidden px-6 py-3 bg-gray-500 text-white font-semibold rounded-xl shadow-lg hover:bg-gray-600 transition-colors">
                 Sign Out
             </button>
         </div>
@@ -108,31 +88,62 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- Your Firebase project configuration ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
-            authDomain: "conquest-command-deck.firebaseapp.com",
-            projectId: "conquest-command-deck",
-            storageBucket: "conquest-command-deck.firebasestorage.app",
-            messagingSenderId: "993959061285",
-            appId: "1:993959061285:web:438296814ad21edc0b1ccc",
-            measurementId: "G-87NN5SXHXB"
-        };
+        // --- Firebase Configuration and Initialization for this Canvas environment ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        let app, db, auth;
+        let groups = [];
+        let nextGroupId = 0;
+        // Use a generic ID since there is no login screen
+        let currentPlayerId = "public-user";
+
+        // Initialize Firebase services after the window has loaded
+        window.onload = async function() {
+            try {
+                if (Object.keys(firebaseConfig).length === 0) {
+                    throw new Error("Firebase configuration is missing or invalid.");
+                }
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Use a different path for the Canvas environment
+                const playerDocRef = doc(db, `artifacts/${appId}/users/${currentPlayerId}`, "roster");
+
+                // Listen for data changes in the Firestore document
+                onSnapshot(playerDocRef, (doc) => {
+                    if (doc.exists()) {
+                        groups = doc.data().groups;
+                    } else {
+                        groups = [];
+                    }
+                    nextGroupId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 0;
+                    renderUI();
+                }, (error) => {
+                    console.error("Error listening to group changes:", error);
+                });
+
+                // Since there is no login screen, show the app directly
+                loginPage.classList.add('hidden');
+                rosterAppPage.classList.remove('hidden');
+                userIdSpan.textContent = currentPlayerId;
+
+                setupEventListeners();
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                showMessage(`Failed to initialize the app: ${error.message}`);
+            }
+        };
 
         // --- DOM Element References ---
         const loginPage = document.getElementById('login-page');
         const rosterAppPage = document.getElementById('roster-app-page');
-        const emailInput = document.getElementById('email-input');
-        const passwordInput = document.getElementById('password-input');
-        const registerBtn = document.getElementById('register-btn');
-        const signInBtn = document.getElementById('sign-in-btn');
-        const authMessage = document.getElementById('auth-message');
         const signOutBtn = document.getElementById('sign-out-btn');
         const userIdSpan = document.getElementById('user-id');
         
@@ -151,14 +162,10 @@
         const messageText = document.getElementById('message-text');
         const closeMessageBtn = document.getElementById('close-message');
         
-        // --- Core Data Model ---
-        let groups = [];
-        let nextGroupId = 0;
-        let currentPlayerId = null;
-
         // --- Core Application Logic ---
         function showMessage(message) {
-            authMessage.textContent = message;
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
         }
 
         function clearMessage() {
@@ -168,7 +175,7 @@
 
         async function saveGroups(playerId) {
             if (!playerId) return;
-            const playerDocRef = doc(db, `rosters`, playerId);
+            const playerDocRef = doc(db, `artifacts/${appId}/users/${playerId}`, "roster");
             try {
                 await setDoc(playerDocRef, { groups: groups });
             } catch (error) {
@@ -177,22 +184,9 @@
             }
         }
 
-        function loadGroups(playerId) {
-            if (!playerId) return;
-            const playerDocRef = doc(db, `rosters`, playerId);
-            onSnapshot(playerDocRef, (doc) => {
-                if (doc.exists()) {
-                    groups = doc.data().groups;
-                } else {
-                    groups = [];
-                }
-                nextGroupId = groups.length > 0 ? Math.max(...groups.map(g => g.id)) + 1 : 0;
-                renderUI();
-            }, (error) => {
-                console.error("Error listening to group changes:", error);
-            });
-        }
-        
+        // The loadGroups function is now part of the window.onload function
+        // to ensure that it runs only after the app has been initialized.
+
         function addGroup(name, pointLimit) {
             const newGroup = {
                 id: nextGroupId++,
