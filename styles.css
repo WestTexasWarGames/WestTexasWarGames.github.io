@@ -87,4 +87,72 @@ button:hover {
     font-weight: bold;
 }
 
+/* Add these new styles to your existing styles.css file */
 
+.roster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.add-unit-container {
+    background-color: #34495e;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#add-unit-form {
+    display: flex;
+    gap: 1rem;
+}
+
+#add-unit-form input {
+    flex-grow: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4c667a;
+    color: #ecf0f1;
+}
+
+#add-unit-form button {
+    padding: 8px 15px;
+}
+
+.roster-list li {
+    background-color: #4c667a;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    cursor: grab;
+}
+
+.roster-list li:hover {
+    background-color: #5b7994;
+}
+
+.roster-list h4 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.roster-list p {
+    margin: 5px 0 0 0;
+    font-size: 0.9rem;
+    color: #bdc3c7;
+}
+
+/* Style for the nested unit list within locations */
+.roster-list .units-list {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.roster-list .units-list li {
+    background-color: #2c3e50; /* Darker color for units */
+    padding: 8px;
+    font-size: 0.9rem;
+    cursor: move; /* Indicates it's draggable */
+}
