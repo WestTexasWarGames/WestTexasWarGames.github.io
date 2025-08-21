@@ -1,3 +1,4 @@
+console.log("app.js has been loaded and is running!");
 // A single, unified JavaScript file to handle all functionality
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
