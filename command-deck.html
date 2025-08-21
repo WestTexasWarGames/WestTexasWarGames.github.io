@@ -31,9 +31,40 @@
         </div>
 
         <div class="roster-grid">
-            <!-- Locations will be dynamically added here by JavaScript -->
+            <div class="locations-container" id="ships-container">
+                <h3>Ships</h3>
+                <ul id="ships-list" class="roster-list" data-location-type="ships">
+                    <!-- Ship locations will be dynamically added here -->
+                </ul>
+            </div>
+            <div class="locations-container" id="planets-container">
+                <h3>Planets</h3>
+                <ul id="planets-list" class="roster-list" data-location-type="planets">
+                    <!-- Planet locations will be dynamically added here -->
+                </ul>
+            </div>
+            <div class="faction-units-container">
+                <h3>Unit Roster</h3>
+                <form id="add-unit-form">
+                    <select id="faction-select">
+                        <option value="">-- Choose a Faction --</option>
+                    </select>
+                    <select id="detachment-select" disabled>
+                        <option value="">-- Choose a Detachment --</option>
+                    </select>
+                    <select id="unit-select" disabled>
+                        <option value="">-- Select a Unit --</option>
+                    </select>
+                    <button type="submit">Add Unit</button>
+                </form>
+                <div class="fallen-log">
+                    <h5>The Fallen</h5>
+                    <ul class="roster-list fallen-list">
+                        <!-- Fallen units will be dynamically added here -->
+                    </ul>
+                </div>
+            </div>
         </div>
-
     </div>
 
     <!-- Load Firebase libraries using standard script tags -->
