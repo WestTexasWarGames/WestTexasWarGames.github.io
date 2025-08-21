@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Unit Importer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background-color: #34495e;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:disabled {
+            background-color: #7f8c8d;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 1rem;
+            color: #ecf0f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bulk Unit Importer</h1>
+        <p>This script will add units to your Firebase Firestore database.</p>
+        <button id="import-btn">Run Import</button>
+        <p id="status">Ready to import.</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
+            authDomain: "conquest-command-deck.firebaseapp.com",
+            projectId: "conquest-command-deck",
+            storageBucket: "conquest-command-deck.firebasestorage.app",
+            messagingSenderId: "993959061285",
+            appId: "1:993959061285:web:438296814ad21edc0b1ccc",
+            measurementId: "G-87NN5SXHXB"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- EDIT THIS SECTION ---
+        // 1. Enter the ID of the faction you want to add units to.
+        const FACTION_ID = "Adeptus Astartes";
+
+        // 2. Add your list of units here. Each object should have a 'name' and 'points'.
+        const unitsToImport = [
+            { name: "Aggressor Squad (3 models)", points: 100 },
+            { name: "Aggressor Squad (6 models)", points: 220 },
+            { name: "Ancient", points: 50 },
+            { name: "Ancient in Terminator Armour", points: 75 },
+            { name: "Apothecary", points: 50 },
+            { name: "Apothecary Biologis", points: 70 },
+            { name: "Assault Intercessor Squad (5 models)", points: 75 },
+            { name: "Assault Intercessor Squad (10 models)", points: 150 },
+            { name: "Assault Intercessors with Jump Packs (5 models)", points: 90 },
+            { name: "Assault Intercessors with Jump Packs (10 models)", points: 160 },
+            { name: "Ballistus Dreadnought", points: 140 },
+            { name: "Bladeguard Ancient", points: 45 },
+            { name: "Bladeguard Veteran Squad (3 models)", points: 80 },
+            { name: "Bladeguard Veteran Squad (6 models)", points: 160 },
+            { name: "Brutalis Dreadnought", points: 160 },
+            { name: "Captain", points: 80 },
+            { name: "Captain in Gravis Armour", points: 80 },
+            { name: "Captain in Phobos Armour", points: 70 },
+            { name: "Captain in Terminator Armour", points: 95 },
+            { name: "Captain Sicarius", points: 85 },
+            { name: "Captain with Jump Pack", points: 75 },
+            { name: "Centurion Assault Squad (3 models)", points: 150 },
+            { name: "Centurion Assault Squad (6 models)", points: 300 },
+            { name: "Centurion Devastator Squad (3 models)", points: 165 },
+            { name: "Centurion Devastator Squad (6 models)", points: 330 },
+            { name: "Chaplain", points: 60 },
+            { name: "Chaplain in Terminator Armour", points: 75 },
+            { name: "Chaplain on Bike", points: 75 },
+            { name: "Chaplain with Jump Pack", points: 75 },
+            { name: "Chief Librarian Tigurius", points: 75 },
+            { name: "Company Heroes (4 models)", points: 105 },
+            { name: "Darnath Lysander", points: 100 },
+            { name: "Desolation Squad (5 models)", points: 200 },
+            { name: "Devastator Squad (5 models)", points: 120 },
+            { name: "Devastator Squad (10 models)", points: 200 },
+            { name: "Dreadnought", points: 135 },
+            { name: "Drop Pod", points: 70 },
+            { name: "Eliminator Squad (3 models)", points: 85 },
+            { name: "Eradicator Squad (3 models)", points: 100 },
+            { name: "Eradicator Squad (6 models)", points: 200 },
+            { name: "Firestrike Servo-turrets (1 model)", points: 75 },
+            { name: "Firestrike Servo-turrets (2 models)", points: 150 },
+            { name: "Gladiator Lancer", points: 160 },
+            { name: "Gladiator Reaper", points: 160 },
+            { name: "Gladiator Valiant", points: 160 },
+            { name: "Hammerfall Bunker", points: 175 },
+            { name: "Heavy Intercessor Squad (5 models)", points: 100 },
+            { name: "Heavy Intercessor Squad (10 models)", points: 200 },
+            { name: "Hellblaster Squad (5 models)", points: 110 },
+            { name: "Hellblaster Squad (10 models)", points: 220 },
+            { name: "Impulsor", points: 80 },
+            { name: "Inceptor Squad (3 models)", points: 120 },
+            { name: "Inceptor Squad (6 models)", points: 240 },
+            { name: "Incursor Squad (5 models)", points: 80 },
+            { name: "Incursor Squad (10 models)", points: 160 },
+            { name: "Infernus Squad (5 models)", points: 90 },
+            { name: "Infernus Squad (10 models)", points: 180 },
+            { name: "Infiltrator Squad (5 models)", points: 100 },
+            { name: "Infiltrator Squad (10 models)", points: 200 },
+            { name: "Intercessor Squad (5 models)", points: 80 },
+            { name: "Intercessor Squad (10 models)", points: 160 },
+            { name: "Invader ATV", points: 60 },
+            { name: "Invictor Tactical Warsuit", points: 125 },
+            { name: "Iron Father Feirros", points: 95 },
+            { name: "Judiciar", points: 70 },
+            { name: "Kayvaan Shrike", points: 100 },
+            { name: "Kor’sarro Khan", points: 70 },
+            { name: "Land Raider", points: 240 },
+            { name: "Land Raider Crusader", points: 220 },
+            { name: "Land Raider Redeemer", points: 285 },
+            { name: "Librarian", points: 65 },
+            { name: "Librarian in Phobos Armour", points: 70 },
+            { name: "Librarian in Terminator Armour", points: 75 },
+            { name: "Lieutenant", points: 65 },
+            { name: "Lieutenant in Phobos Armour", points: 55 },
+            { name: "Lieutenant in Reiver Armour", points: 55 },
+            { name: "Lieutenant with Combi-weapon", points: 70 },
+            { name: "Lieutenant Titus", points: 70 },
+            { name: "Marneus Calgar (3 models)", points: 200 },
+            { name: "Outrider Squad (3 models)", points: 80 },
+            { name: "Outrider Squad (6 models)", points: 160 },
+            { name: "Outrider Squad with Invader ATV", points: 60 },
+            { name: "Pedro Kantor", points: 90 },
+            { name: "Predator Annihilator", points: 135 },
+            { name: "Predator Destructor", points: 140 },
+            { name: "Razorback", points: 95 },
+            { name: "Redemptor Dreadnought", points: 210 },
+            { name: "Reiver Squad (5 models)", points: 80 },
+            { name: "Reiver Squad (10 models)", points: 160 },
+            { name: "Repulsor", points: 180 },
+            { name: "Repulsor Executioner", points: 220 },
+            { name: "Rhino", points: 75 },
+            { name: "Roboute Guilliman", points: 320 },
+            { name: "Scout Squad (5 models)", points: 70 },
+            { name: "Scout Squad (10 models)", points: 140 },
+            { name: "Sternguard Veteran Squad (5 models)", points: 100 },
+            { name: "Sternguard Veteran Squad (10 models)", points: 200 },
+            { name: "Storm Speeder Hailstrike", points: 115 },
+            { name: "Storm Speeder Hammerstrike", points: 125 },
+            { name: "Storm Speeder Thunderstrike", points: 150 },
+            { name: "Stormhawk Interceptor", points: 155 },
+            { name: "Stormraven Gunship", points: 280 },
+            { name: "Stormtalon Gunship", points: 165 },
+            { name: "Suppressor Squad (3 models)", points: 75 },
+            { name: "Tactical Squad (10 models)", points: 140 },
+            { name: "Techmarine", points: 55 },
+            { name: "Terminator Assault Squad (5 models)", points: 180 },
+            { name: "Terminator Assault Squad (10 models)", points: 360 },
+            { name: "Terminator Squad (5 models)", points: 170 },
+            { name: "Terminator Squad (10 models)", points: 340 },
+            { name: "Tor Garadon", points: 90 },
+            { name: "Uriel Ventris", points: 95 },
+            { name: "Vanguard Veteran Squad with Jump Packs (5 models)", points: 95 },
+            { name: "Vanguard Veteran Squad with Jump Packs (10 models)", points: 190 },
+            { name: "Vindicator", points: 185 },
+            { name: "Vulkan He’stan", points: 100 },
+            { name: "Whirlwind", points: 190 },
+            { name: "Astraeus", points: 525 },
+            { name: "Thunderhawk Gunship", points: 840 }
+        ];
+        // --- END EDIT SECTION ---
+
+        const importBtn = document.getElementById('import-btn');
+        const statusEl = document.getElementById('status');
+
+        importBtn.addEventListener('click', async () => {
+            importBtn.disabled = true;
+            statusEl.textContent = "Importing units... Please wait.";
+
+            if (!FACTION_ID) {
+                statusEl.textContent = "Error: Please provide a FACTION_ID.";
+                importBtn.disabled = false;
+                return;
+            }
+
+            try {
+                const unitsCollectionRef = collection(db, 'gameData', 'factions', FACTION_ID, 'units');
+                const importPromises = unitsToImport.map(unit => {
+                    return addDoc(unitsCollectionRef, unit);
+                });
+
+                await Promise.all(importPromises);
+                statusEl.textContent = `Successfully imported ${unitsToImport.length} units!`;
+                console.log("All units imported successfully.");
+
+            } catch (error) {
+                statusEl.textContent = `Import failed: ${error.message}`;
+                console.error("Error during bulk import:", error);
+            } finally {
+                importBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
