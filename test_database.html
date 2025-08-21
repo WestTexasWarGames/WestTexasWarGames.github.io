@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Dropdown Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        .container {
+            background-color: #34495e;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 300px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4c667a;
+            color: #ecf0f1;
+        }
+        h3 {
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>Test Dropdown Menus</h3>
+        <select id="faction-select">
+            <option value="">-- Choose a Faction --</option>
+        </select>
+        <select id="detachment-select" disabled>
+            <option value="">-- Choose a Detachment --</option>
+        </select>
+        <select id="unit-select" disabled>
+            <option value="">-- Select a Unit --</option>
+        </select>
+    </div>
+
+    <!-- Load Firebase libraries using standard script tags -->
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Your web app's Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyCt_hsh6MCo_0sNWFKtAlsM-oSGVRGDPF8",
+                authDomain: "conquest-command-deck.firebaseapp.com",
+                projectId: "conquest-command-deck",
+                storageBucket: "conquest-command-deck.firebasestorage.app",
+                messagingSenderId: "993959061285",
+                appId: "1:993959061285:web:438296814ad21edc0b1ccc",
+                measurementId: "G-87NN5SXHXB"
+            };
+            
+            const app = firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+
+            const factionSelect = document.getElementById('faction-select');
+            const detachmentSelect = document.getElementById('detachment-select');
+            const unitSelect = document.getElementById('unit-select');
+
+            const GAME_DATA_DOC_ID = 'conquest'; 
+            let currentUserId = 'test-user-id-for-detachments'; // Use a test user ID for now
+
+            // Fetch and populate Factions
+            const fetchFactions = async () => {
+                console.log(`Attempting to fetch factions from: gameData/${GAME_DATA_DOC_ID}/factions`);
+                try {
+                    const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
+                    if (factionsSnapshot.empty) {
+                        console.warn("No factions found. Check your database path and data.");
+                        return;
+                    }
+                    factionsSnapshot.forEach(doc => {
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = doc.data().name;
+                        factionSelect.appendChild(option);
+                    });
+                    console.log(`Successfully fetched ${factionsSnapshot.size} factions.`);
+                } catch (error) {
+                    console.error("Error fetching factions:", error);
+                }
+            };
+            
+            // Fetch and populate Detachments
+            factionSelect.addEventListener('change', async (e) => {
+                const selectedFactionId = e.target.value;
+                if (!selectedFactionId) {
+                    detachmentSelect.disabled = true;
+                    detachmentSelect.innerHTML = '<option value="">-- Choose a Detachment --</option>';
+                    unitSelect.disabled = true;
+                    unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
+                    return;
+                }
+                
+                console.log(`Attempting to fetch detachments for faction: ${selectedFactionId}`);
+                try {
+                    const detachmentsSnapshot = await db.collection('rosters').doc(currentUserId).collection('detachments').where('factionId', '==', selectedFactionId).get();
+                    detachmentSelect.innerHTML = '<option value="">-- Choose a Detachment --</option>';
+                    detachmentsSnapshot.forEach(doc => {
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = doc.data().name;
+                        detachmentSelect.appendChild(option);
+                    });
+                    detachmentSelect.disabled = false;
+                    console.log(`Successfully fetched ${detachmentsSnapshot.size} detachments.`);
+                } catch (error) {
+                    console.error("Error fetching detachments:", error);
+                }
+            });
+
+            // Fetch and populate Units
+            detachmentSelect.addEventListener('change', async (e) => {
+                const selectedDetachmentId = e.target.value;
+                const selectedFactionId = factionSelect.value;
+                if (!selectedDetachmentId || !selectedFactionId) {
+                    unitSelect.disabled = true;
+                    unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
+                    return;
+                }
+
+                console.log(`Attempting to fetch units for faction: ${selectedFactionId}`);
+                try {
+                    const unitsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(selectedFactionId).collection('units').get();
+                    unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
+                    unitsSnapshot.forEach(doc => {
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = doc.data().name;
+                        unitSelect.appendChild(option);
+                    });
+                    unitSelect.disabled = false;
+                    console.log(`Successfully fetched ${unitsSnapshot.size} units.`);
+                } catch (error) {
+                    console.error("Error fetching units:", error);
+                }
+            });
+
+            fetchFactions();
+        });
+    </script>
+</body>
+</html>
