@@ -215,11 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 option.textContent = factionsData[factionId].name;
                 factionSelect.appendChild(option);
             }
-            
-            // Fix: Manually trigger the change event to populate the other dropdowns
-            if (factionSelect.value) {
-                factionSelect.dispatchEvent(new Event('change'));
-            }
 
             factionSelect.addEventListener('change', async (e) => {
                 const selectedFactionId = e.target.value;
