@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const locationDetails = document.getElementById('location-details');
     const addCruiserBtn = document.getElementById('add-cruiser-btn');
     const addHeavyCruiserBtn = document.getElementById('add-heavy-cruiser-btn');
-    const addBattleshipBtn = document.getElementById('add-battleship-btn');
+    const addBattleshipBtn = document = document.getElementById('add-battleship-btn');
     const addBluePlanetBtn = document.getElementById('add-blue-planet-btn');
     const addRedPlanetBtn = document.getElementById('add-red-planet-btn');
     const addGoldPlanetBtn = document.getElementById('add-gold-planet-btn');
@@ -214,6 +214,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 option.value = factionId;
                 option.textContent = factionsData[factionId].name;
                 factionSelect.appendChild(option);
+            }
+
+            // Manually trigger the change event to populate the other dropdowns
+            if (factionSelect.value) {
+                factionSelect.dispatchEvent(new Event('change'));
             }
 
             factionSelect.addEventListener('change', async (e) => {
