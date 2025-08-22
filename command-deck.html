@@ -15,17 +15,35 @@
 
     <div class="main-content">
         <h2>Army Roster Management</h2>
-
-        <div class="add-location-buttons">
-            <div class="column">
-                <button id="add-cruiser-btn" data-name="Cruiser" data-type="ship" class="add-loc-btn">+Cruiser</button>
-                <button id="add-heavy-cruiser-btn" data-name="Heavy Cruiser" data-type="ship" class="add-loc-btn">+Heavy Cruiser</button>
-                <button id="add-battleship-btn" data-name="Battleship" data-type="ship" class="add-loc-btn">+Battleship</button>
+        
+        <div class="main-controls">
+            <div class="add-location-buttons">
+                <div class="column">
+                    <button id="add-cruiser-btn" data-name="Cruiser" data-type="ship" class="add-loc-btn">+Cruiser</button>
+                    <button id="add-heavy-cruiser-btn" data-name="Heavy Cruiser" data-type="ship" class="add-loc-btn">+Heavy Cruiser</button>
+                    <button id="add-battleship-btn" data-name="Battleship" data-type="ship" class="add-loc-btn">+Battleship</button>
+                </div>
+                <div class="column">
+                    <button id="add-blue-planet-btn" data-name="Blue Planet" data-type="planet" class="add-loc-btn">+Blue Planet</button>
+                    <button id="add-red-planet-btn" data-name="Red Planet" data-type="planet" class="add-loc-btn">+Red Planet</button>
+                    <button id="add-gold-planet-btn" data-name="Gold Planet" data-type="planet" class="add-loc-btn">+Gold Planet</button>
+                </div>
             </div>
-            <div class="column">
-                <button id="add-blue-planet-btn" data-name="Blue Planet" data-type="planet" class="add-loc-btn">+Blue Planet</button>
-                <button id="add-red-planet-btn" data-name="Red Planet" data-type="planet" class="add-loc-btn">+Red Planet</button>
-                <button id="add-gold-planet-btn" data-name="Gold Planet" data-type="planet" class="add-loc-btn">+Gold Planet</button>
+
+            <div class="add-unit-container">
+                <h3>Unit Roster</h3>
+                <form id="add-unit-form">
+                    <select id="faction-select">
+                        <option value="">-- Choose a Faction --</option>
+                    </select>
+                    <select id="detachment-select" disabled>
+                        <option value="">-- Choose a Detachment --</option>
+                    </select>
+                    <select id="unit-select" disabled>
+                        <option value="">-- Select a Unit --</option>
+                    </select>
+                    <button type="submit">Add Unit</button>
+                </form>
             </div>
         </div>
         
@@ -56,4 +74,3 @@
     <script src="app.js"></script>
 </body>
 </html>
-
