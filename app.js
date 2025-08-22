@@ -90,7 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const fetchFactionsData = async () => {
             try {
-                // Correct database path for factions
                 const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
                 factionsSnapshot.forEach(doc => {
                     factionsData[doc.id] = doc.data();
