@@ -68,7 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const detachmentSelect = document.getElementById('detachment-select');
     const unitSelect = document.getElementById('unit-select');
     const addUnitForm = document.getElementById('add-unit-form');
-    
 
     let currentUserId = null;
     let factionsData = {};
@@ -214,13 +213,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const unitList = locationDetails.querySelector('.unit-list');
             const fallenList = locationDetails.querySelector('.fallen-list');
 
+            factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
             for (const factionId in factionsData) {
                 const option = document.createElement('option');
                 option.value = factionId;
                 option.textContent = factionsData[factionId].name;
                 factionSelect.appendChild(option);
             }
-
+            
             factionSelect.addEventListener('change', async function(e) {
                 const selectedFactionId = e.target.value;
                 if (!selectedFactionId) {
