@@ -268,7 +268,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         units.push({ id: unitDoc.id, data: unitDoc.data() });
                     });
 
-                    units.sort((a, b) => a.data.name.localeCompare(b.data.name));
+                    units.sort((a, b) => {
+                        const nameA = a.data.name || '';
+                        const nameB = b.data.name || '';
+                        return nameA.trim().localeCompare(nameB.trim());
+                    });
 
                     unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
                     units.forEach(function(unit) {
