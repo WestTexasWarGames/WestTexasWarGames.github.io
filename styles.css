@@ -47,12 +47,20 @@ body {
     box-sizing: border-box;
 }
 
-/* New styles for the location buttons */
+/* New main controls section with buttons and dropdowns */
+.main-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Buttons for adding specific locations */
 .add-location-buttons {
     display: flex;
     justify-content: flex-start;
     gap: 1rem;
-    margin-bottom: 2rem;
 }
 
 .add-location-buttons .column {
@@ -65,11 +73,11 @@ body {
     background-color: #27ae60;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 15px 25px; /* Increased by 50% */
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    width: 200px;
+    width: 150px; /* Increased by 50% */
     transition: background-color 0.3s ease;
     text-align: center;
     white-space: nowrap;
@@ -77,6 +85,44 @@ body {
 
 .add-loc-btn:hover {
     background-color: #229954;
+}
+
+/* New styles for the unit roster container */
+.add-unit-container {
+    background-color: #34495e;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.add-unit-container h3 {
+    margin-top: 0;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.5rem;
+}
+
+#add-unit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#add-unit-form select {
+    background-color: #4c667a;
+    color: #ecf0f1;
+    border: none;
+    border-radius: 5px;
+    padding: 8px;
+    width: 100%;
+}
+
+#add-unit-form button {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 /* New main layout for tabs and content */
@@ -108,7 +154,7 @@ body {
     color: #bdc3c7;
 }
 
-/* Tab-like styling for collapsed locations */
+/* Tab-like styling for locations */
 .locations-container {
     padding: 10px;
     border-radius: 5px;
@@ -151,30 +197,6 @@ body {
 .unit-list.drag-over {
     border-color: #3498db;
     background-color: #4c667a;
-}
-
-.add-unit-form {
-    display: flex;
-    gap: 10px;
-    margin-top: 1rem;
-}
-
-.add-unit-form select {
-    background-color: #4c667a;
-    color: #ecf0f1;
-    border: none;
-    border-radius: 5px;
-    padding: 8px;
-    flex-grow: 1;
-}
-
-.add-unit-form button {
-    background-color: #27ae60;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
-    cursor: pointer;
 }
 
 /* The Fallen Log */
