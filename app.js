@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     factionsData[doc.id] = doc.data();
                 });
                 console.log("Factions data fetched successfully.");
-            } catch (error) {
+            } catch (error) => {
                 console.error("Error fetching factions data:", error);
             }
         };
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     type: type,
                 });
                 console.log(`New ${type} added: ${name}.`);
-            } catch (error) {
+            } catch (error) => {
                 console.error("Error adding location:", error);
             }
         };
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 await db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).delete();
                 locationDetails.innerHTML = `<p class="placeholder-text">Select a ship or planet to view its details.</p>`;
                 console.log("Location and its units deleted successfully.");
-            } catch (error) {
+            } catch (error) => {
                 console.error("Error deleting location:", error);
             }
         };
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 await fallenRef.delete();
                 console.log("Fallen unit deleted successfully.");
-            } catch (error) {
+            } catch (error) => {
                 console.error("Error deleting fallen unit:", error);
             }
         };
