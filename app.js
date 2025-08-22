@@ -209,6 +209,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const unitList = locationDetails.querySelector('.unit-list');
             const fallenList = locationDetails.querySelector('.fallen-list');
 
+            // Fix for the "Choose Faction" default
+            factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
             for (const factionId in factionsData) {
                 const option = document.createElement('option');
                 option.value = factionId;
@@ -217,6 +219,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Manually trigger the change event to populate the other dropdowns
+            if (factionSelect.value) {
+                factionSelect.dispatchEvent(new Event('change'));
+            }
+
             factionSelect.addEventListener('change', async function(e) {
                 const selectedFactionId = e.target.value;
                 if (!selectedFactionId) {
