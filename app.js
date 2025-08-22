@@ -97,14 +97,11 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
                 
-                // Clear existing options and add a placeholder
                 factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
 
                 factionsSnapshot.forEach(function(doc) {
-                    // Store data for later use
                     factionsData[doc.id] = doc.data();
                     
-                    // Create a new <option> for the dropdown
                     const option = document.createElement('option');
                     option.value = doc.id;
                     option.textContent = doc.data().name;
@@ -265,14 +262,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                     const unitsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(selectedFactionId).collection('units').get();
-                    unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
+                    
+                    const units = [];
                     unitsSnapshot.forEach(function(unitDoc) {
+                        units.push({ id: unitDoc.id, data: unitDoc.data() });
+                    });
+
+                    units.sort((a, b) => a.data.name.localeCompare(b.data.name));
+
+                    unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
+                    units.forEach(function(unit) {
                         const option = document.createElement('option');
-                        option.value = unitDoc.id;
-                        option.textContent = `${unitDoc.data().name} (${unitDoc.data().points} pts)`;
-                        option.dataset.points = unitDoc.data().points;
+                        option.value = unit.id;
+                        option.textContent = `${unit.data.name} (${unit.data.points} pts)`;
+                        option.dataset.points = unit.data.points;
                         unitSelect.appendChild(option);
                     });
+                    
                     unitSelect.disabled = false;
                 });
             }
