@@ -215,6 +215,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 option.textContent = factionsData[factionId].name;
                 factionSelect.appendChild(option);
             }
+            
+            // Fix: Manually trigger the change event to populate the other dropdowns
+            if (factionSelect.value) {
+                factionSelect.dispatchEvent(new Event('change'));
+            }
 
             factionSelect.addEventListener('change', async (e) => {
                 const selectedFactionId = e.target.value;
@@ -385,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         await db.collection('rosters').doc(currentUserId).collection(newLocationType).doc(newLocationId).collection('units').add(unitData);
                         await db.collection('rosters').doc(currentUserId).collection(currentLocType).doc(currentLocId).collection('units').doc(unitId).delete();
-                    } catch (error) {
+                    } catch (error) => {
                         console.error("Error moving unit:", error);
                     }
                 }
