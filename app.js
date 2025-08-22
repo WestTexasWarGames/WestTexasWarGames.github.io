@@ -216,10 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 factionSelect.appendChild(option);
             }
 
-            if (factionSelect.value) {
-                factionSelect.dispatchEvent(new Event('change'));
-            }
-
+            // Manually trigger the change event to populate the other dropdowns
             factionSelect.addEventListener('change', async function(e) {
                 const selectedFactionId = e.target.value;
                 if (!selectedFactionId) {
