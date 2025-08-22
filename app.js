@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 option.textContent = factionsData[factionId].name;
                 factionSelect.appendChild(option);
             }
-            
+
             if (factionSelect.value) {
                 factionSelect.dispatchEvent(new Event('change'));
             }
