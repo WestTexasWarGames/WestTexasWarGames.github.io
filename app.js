@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const factionSelect = document.getElementById('faction-select');
     const unitSelect = document.getElementById('unit-select');
     const addUnitForm = document.getElementById('add-unit-form');
+    const pointsDisplay = document.getElementById('points-display');
 
     let currentUserId = null;
     let factionsData = {};
@@ -95,10 +96,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const fetchFactionsData = async function() {
             try {
                 const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
+                
+                // Clear existing options and add a placeholder
+                factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
+
                 factionsSnapshot.forEach(function(doc) {
+                    // Store data for later use
                     factionsData[doc.id] = doc.data();
+                    
+                    // Create a new <option> for the dropdown
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = doc.data().name;
+                    factionSelect.appendChild(option);
                 });
-                console.log("Factions data fetched successfully.");
+                console.log("Factions data fetched and dropdown populated.");
             } catch (error) {
                 console.error("Error fetching factions data:", error);
             }
@@ -135,14 +147,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
-        const moveToFallen = async function(unitRef, locationId, locationType) {
+        const moveToFallen = async function(unitRef, locationId, locationType, unitPoints) {
             const unitDoc = await unitRef.get();
             if (!unitDoc.exists) return;
             const unitData = unitDoc.data();
             
-            const fallenCollection = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen');
+            const fallenCollection = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen');
             await fallenCollection.add(unitData);
             await unitRef.delete();
+            const locationRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId);
+            const locationDoc = await locationRef.get();
+            const currentPoints = locationDoc.data().points || 0;
+            const newPoints = Math.max(0, currentPoints - unitPoints);
+            await locationRef.update({ points: newPoints });
         };
 
         const deleteFallenUnit = async function(fallenRef) {
@@ -160,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
             li.className = 'locations-container';
             li.dataset.locationId = doc.id;
             li.dataset.locationType = location.type + 's';
-            li.textContent = location.name;
+            li.textContent = `${location.name} (${location.points || 0} pts)`;
             list.appendChild(li);
 
             li.addEventListener('click', function() {
@@ -183,6 +200,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="fas fa-trash-alt delete-loc-btn"></i>
                 </div>
                 <input type="text" class="location-notes-input" placeholder="Enter Detachment">
+                <div class="points-display">
+                    Current Points: <span id="current-points">${location.points || 0}</span> pts
+                </div>
                 <h5>Units</h5>
                 <ul class="roster-list unit-list" data-location-id="${locationId}" data-location-type="${locationType}"></ul>
                 <div class="fallen-log">
@@ -214,9 +234,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
             db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').onSnapshot(function(snapshot) {
                 unitList.innerHTML = '';
+                let totalPoints = 0;
                 snapshot.forEach(function(unitDoc) {
+                    const unitData = unitDoc.data();
                     renderUnit(unitDoc, unitList, locationType, locationId);
+                    totalPoints += parseInt(unitData.points || 0);
                 });
+                const pointsSpan = document.getElementById('current-points');
+                if (pointsSpan) {
+                    pointsSpan.textContent = totalPoints;
+                }
+                db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).update({ points: totalPoints });
             });
 
             db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').onSnapshot(function(snapshot) {
@@ -227,19 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         };
         
-        // Setup dropdowns and event listeners on page load
         const setupDropdownListeners = function() {
-            // Populate the global faction dropdown on load
-            if (factionSelect) {
-                factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
-                for (const factionId in factionsData) {
-                    const option = document.createElement('option');
-                    option.value = factionId;
-                    option.textContent = factionsData[factionId].name;
-                    factionSelect.appendChild(option);
-                }
-            }
-
             if (factionSelect) {
                 factionSelect.addEventListener('change', async function(e) {
                     const selectedFactionId = e.target.value;
@@ -249,17 +265,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                     const unitsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(selectedFactionId).collection('units').get();
-                    unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+                    unitSelect.innerHTML = '<option value="">-- Select a Unit --</option>';
                     unitsSnapshot.forEach(function(unitDoc) {
                         const option = document.createElement('option');
                         option.value = unitDoc.id;
-                        option.textContent = unitDoc.data().name;
+                        option.textContent = `${unitDoc.data().name} (${unitDoc.data().points} pts)`;
+                        option.dataset.points = unitDoc.data().points;
                         unitSelect.appendChild(option);
                     });
                     unitSelect.disabled = false;
                 });
             }
-            
+
             if (addUnitForm) {
                 addUnitForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
@@ -270,16 +287,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     const locationId = activeTab.dataset.locationId;
                     const locationType = activeTab.dataset.locationType;
-                    const unitName = unitSelect.options[unitSelect.selectedIndex].text;
+                    const selectedOption = unitSelect.options[unitSelect.selectedIndex];
+                    const unitName = selectedOption.textContent;
+                    const unitPoints = selectedOption.dataset.points;
                     const unitId = unitSelect.value;
                     
                     if (!unitId) {
                         alert('Please select a unit to add.');
                         return;
                     }
+                    
+                    const locationRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId);
 
-                    await db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').add({
+                    await locationRef.collection('units').add({
                         name: unitName,
+                        points: unitPoints
                     });
                 });
             }
@@ -293,9 +315,10 @@ document.addEventListener('DOMContentLoaded', function() {
             li.dataset.unitId = doc.id;
             li.dataset.locationId = locationId;
             li.dataset.locationType = locationType;
-
+            li.dataset.unitPoints = unit.points;
+            
             li.innerHTML = `
-                <span>${unit.name}</span>
+                <span>${unit.name} (${unit.points} pts)</span>
                 <i class="fas fa-skull move-to-fallen-btn"></i>
             `;
             parentList.appendChild(li);
@@ -303,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const moveToFallenBtn = li.querySelector('.move-to-fallen-btn');
             moveToFallenBtn.addEventListener('click', function() {
                 const unitRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').doc(doc.id);
-                moveToFallen(unitRef, locationId, locationType);
+                moveToFallen(unitRef, locationId, locationType, unit.points);
             });
         };
 
@@ -320,7 +343,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const deleteFallenBtn = li.querySelector('.delete-fallen-btn');
             deleteFallenBtn.addEventListener('click', function() {
-                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen').doc(doc.id);
+                const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').doc(doc.id);
                 deleteFallenUnit(fallenRef);
             });
         };
@@ -329,16 +352,36 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!currentUserId) return;
             
             db.collection('rosters').doc(currentUserId).collection('ships').onSnapshot(function(snapshot) {
+                const activeTab = shipsList.querySelector('.locations-container.active');
+                const activeLocationId = activeTab ? activeTab.dataset.locationId : null;
+
                 shipsList.innerHTML = '';
                 snapshot.forEach(function(doc) {
                     renderLocationTabs(doc, shipsList);
                 });
+
+                if (activeLocationId) {
+                    const newActiveTab = shipsList.querySelector(`.locations-container[data-location-id="${activeLocationId}"]`);
+                    if (newActiveTab) {
+                        newActiveTab.classList.add('active');
+                    }
+                }
             });
             db.collection('rosters').doc(currentUserId).collection('planets').onSnapshot(function(snapshot) {
+                const activeTab = planetsList.querySelector('.locations-container.active');
+                const activeLocationId = activeTab ? activeTab.dataset.locationId : null;
+
                 planetsList.innerHTML = '';
                 snapshot.forEach(function(doc) {
                     renderLocationTabs(doc, planetsList);
                 });
+
+                if (activeLocationId) {
+                    const newActiveTab = planetsList.querySelector(`.locations-container[data-location-id="${activeLocationId}"]`);
+                    if (newActiveTab) {
+                        newActiveTab.classList.add('active');
+                    }
+                }
             });
         };
 
@@ -354,7 +397,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('dragstart', function(e) {
             if (e.target.classList.contains('unit-item')) {
                 draggedUnit = e.target;
-                e.dataTransfer.setData('text/plain', draggedUnit.dataset.unitId);
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    unitId: draggedUnit.dataset.unitId,
+                    unitPoints: draggedUnit.dataset.unitPoints
+                }));
                 e.dataTransfer.effectAllowed = 'move';
             }
         });
@@ -379,20 +425,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const dropTarget = e.target.closest('.unit-list');
             
             if (dropTarget && draggedUnit) {
-                const unitId = draggedUnit.dataset.unitId;
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const unitId = data.unitId;
                 const currentLocId = draggedUnit.dataset.locationId;
                 const currentLocType = draggedUnit.dataset.locationType;
                 
-                const newLocationContainer = dropTarget.closest('.content-area');
-                const newLocationId = newLocationContainer ? newLocationContainer.querySelector('.unit-list').dataset.locationId : null;
-                const newLocationType = newLocationContainer ? newLocationContainer.querySelector('.unit-list').dataset.locationType : null;
+                const newLocationId = dropTarget.dataset.locationId;
+                const newLocationType = dropTarget.dataset.locationType;
                 
                 if (newLocationId && newLocationId !== currentLocId) {
                     try {
+                        const newLocationRef = db.collection('rosters').doc(currentUserId).collection(newLocationType).doc(newLocationId);
+                        
                         const unitDoc = await db.collection('rosters').doc(currentUserId).collection(currentLocType).doc(currentLocId).collection('units').doc(unitId).get();
                         const unitData = unitDoc.data();
                         
-                        await db.collection('rosters').doc(currentUserId).collection(newLocationType).doc(newLocationId).collection('units').add(unitData);
+                        await newLocationRef.collection('units').add(unitData);
                         await db.collection('rosters').doc(currentUserId).collection(currentLocType).doc(currentLocId).collection('units').doc(unitId).delete();
                     } catch (error) {
                         console.error("Error moving unit:", error);
