@@ -64,6 +64,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const addBluePlanetBtn = document.getElementById('add-blue-planet-btn');
     const addRedPlanetBtn = document.getElementById('add-red-planet-btn');
     const addGoldPlanetBtn = document.getElementById('add-gold-planet-btn');
+    const factionSelect = document.getElementById('faction-select');
+    const detachmentSelect = document.getElementById('detachment-select');
+    const unitSelect = document.getElementById('unit-select');
+    const addUnitForm = document.getElementById('add-unit-form');
+    
 
     let currentUserId = null;
     let factionsData = {};
@@ -95,6 +100,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     factionsData[doc.id] = doc.data();
                 });
                 console.log("Factions data fetched successfully.");
+
+                // Populate the global faction dropdown on load
+                factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
+                for (const factionId in factionsData) {
+                    const option = document.createElement('option');
+                    option.value = factionId;
+                    option.textContent = factionsData[factionId].name;
+                    factionSelect.appendChild(option);
+                }
             } catch (error) {
                 console.error("Error fetching factions data:", error);
             }
@@ -179,12 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     <i class="fas fa-trash-alt delete-loc-btn"></i>
                 </div>
                 <h5>Units</h5>
-                <form class="add-unit-form">
-                    <select class="faction-select"></select>
-                    <select class="detachment-select" disabled></select>
-                    <select class="unit-select" disabled></select>
-                    <button type="submit">Add Unit</button>
-                </form>
                 <ul class="roster-list unit-list" data-location-id="${locationId}" data-location-type="${locationType}"></ul>
                 <div class="fallen-log">
                     <h5>The Fallen</h5>
@@ -202,70 +210,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 deleteLocation(locationId, location.type);
             });
             
-            const factionSelect = locationDetails.querySelector('.faction-select');
-            const detachmentSelect = locationDetails.querySelector('.detachment-select');
-            const unitSelect = locationDetails.querySelector('.unit-select');
-            const addUnitForm = locationDetails.querySelector('.add-unit-form');
             const unitList = locationDetails.querySelector('.unit-list');
             const fallenList = locationDetails.querySelector('.fallen-list');
-
-            // Populate Faction Dropdown
-            factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
-            for (const factionId in factionsData) {
-                const option = document.createElement('option');
-                option.value = factionId;
-                option.textContent = factionsData[factionId].name;
-                factionSelect.appendChild(option);
-            }
-
-            factionSelect.addEventListener('change', async function(e) {
-                const selectedFactionId = e.target.value;
-                if (!selectedFactionId) {
-                    detachmentSelect.disabled = true;
-                    detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
-                    unitSelect.disabled = true;
-                    unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
-                    return;
-                }
-                const detachmentsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(selectedFactionId).collection('detachments').get();
-                detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
-                detachmentsSnapshot.forEach(function(doc) {
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = doc.data().name;
-                    detachmentSelect.appendChild(option);
-                });
-                detachmentSelect.disabled = false;
-            });
-
-            detachmentSelect.addEventListener('change', async function(e) {
-                const selectedDetachmentId = e.target.value;
-                if (!selectedDetachmentId) {
-                    unitSelect.disabled = true;
-                    unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
-                    return;
-                }
-                const detachmentDoc = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(factionSelect.value).collection('detachments').doc(selectedDetachmentId).get();
-                const factionId = detachmentDoc.data().factionId;
-                const unitsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(factionId).collection('units').get();
-                unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
-                unitsSnapshot.forEach(function(unitDoc) {
-                    const option = document.createElement('option');
-                    option.value = unitDoc.id;
-                    option.textContent = unitDoc.data().name;
-                    unitSelect.appendChild(option);
-                });
-                unitSelect.disabled = false;
-            });
-
-            addUnitForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                if (!unitSelect.value) return;
-                await db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').add({
-                    name: unitSelect.options[unitSelect.selectedIndex].text,
-                    detachmentId: detachmentSelect.value,
-                });
-            });
 
             db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').onSnapshot(function(snapshot) {
                 unitList.innerHTML = '';
@@ -282,6 +228,73 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         };
         
+        // Populate the global dropdowns once on page load
+        factionSelect.addEventListener('change', async function(e) {
+            const selectedFactionId = e.target.value;
+            if (!selectedFactionId) {
+                detachmentSelect.disabled = true;
+                detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
+                unitSelect.disabled = true;
+                unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+                return;
+            }
+            const detachmentsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(selectedFactionId).collection('detachments').get();
+            detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
+            detachmentSelect.disabled = false;
+            detachmentsSnapshot.forEach(function(doc) {
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = doc.data().name;
+                detachmentSelect.appendChild(option);
+            });
+            
+            if (detachmentSelect.value) {
+                detachmentSelect.dispatchEvent(new Event('change'));
+            }
+        });
+
+        detachmentSelect.addEventListener('change', async function(e) {
+            const selectedDetachmentId = e.target.value;
+            if (!selectedDetachmentId) {
+                unitSelect.disabled = true;
+                unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+                return;
+            }
+            const detachmentDoc = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(factionSelect.value).collection('detachments').doc(selectedDetachmentId).get();
+            const factionId = detachmentDoc.data().factionId;
+            const unitsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(factionId).collection('units').get();
+            unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+            unitsSnapshot.forEach(function(unitDoc) {
+                const option = document.createElement('option');
+                option.value = unitDoc.id;
+                option.textContent = unitDoc.data().name;
+                unitSelect.appendChild(option);
+            });
+            unitSelect.disabled = false;
+        });
+
+        addUnitForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const activeTab = document.querySelector('.locations-container.active');
+            if (!activeTab) {
+                alert('Please select a ship or planet first.');
+                return;
+            }
+            const locationId = activeTab.dataset.locationId;
+            const locationType = activeTab.dataset.locationType;
+            const unitName = unitSelect.options[unitSelect.selectedIndex].text;
+            const unitId = unitSelect.value;
+            
+            if (!unitId) {
+                alert('Please select a unit to add.');
+                return;
+            }
+
+            await db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').add({
+                name: unitName,
+            });
+        });
+
         const renderUnit = function(doc, parentList, locationType, locationId) {
             const unit = doc.data();
             const li = document.createElement('li');
