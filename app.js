@@ -64,6 +64,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const addBluePlanetBtn = document.getElementById('add-blue-planet-btn');
     const addRedPlanetBtn = document.getElementById('add-red-planet-btn');
     const addGoldPlanetBtn = document.getElementById('add-gold-planet-btn');
+    const factionSelect = document.getElementById('faction-select');
+    const detachmentSelect = document.getElementById('detachment-select');
+    const unitSelect = document.getElementById('unit-select');
+    const addUnitForm = document.getElementById('add-unit-form');
+    
 
     let currentUserId = null;
     let factionsData = {};
@@ -209,18 +214,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const unitList = locationDetails.querySelector('.unit-list');
             const fallenList = locationDetails.querySelector('.fallen-list');
 
-            // Fix for the "Choose Faction" default
-            factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
             for (const factionId in factionsData) {
                 const option = document.createElement('option');
                 option.value = factionId;
                 option.textContent = factionsData[factionId].name;
                 factionSelect.appendChild(option);
-            }
-
-            // Manually trigger the change event to populate the other dropdowns
-            if (factionSelect.value) {
-                factionSelect.dispatchEvent(new Event('change'));
             }
 
             factionSelect.addEventListener('change', async function(e) {
