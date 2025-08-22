@@ -27,27 +27,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (loginBtn && signupBtn) {
         // Handle user login
-        loginBtn.addEventListener('click', () => {
+        loginBtn.addEventListener('click', function() {
             const email = emailInput.value;
             const password = passwordInput.value;
             auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
+                .then(function() {
                     window.location.href = 'command-deck.html';
                 })
-                .catch((error) => {
+                .catch(function(error) {
                     alert("Login failed: " + error.message);
                 });
         });
 
         // Handle user sign up
-        signupBtn.addEventListener('click', () => {
+        signupBtn.addEventListener('click', function() {
             const email = emailInput.value;
             const password = passwordInput.value;
             auth.createUserWithAndPassword(email, password)
-                .then(() => {
+                .then(function() {
                     alert("Account created successfully! You can now log in.");
                 })
-                .catch((error) => {
+                .catch(function(error) {
                     alert("Sign up failed: " + error.message);
                 });
         });
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const locationDetails = document.getElementById('location-details');
     const addCruiserBtn = document.getElementById('add-cruiser-btn');
     const addHeavyCruiserBtn = document.getElementById('add-heavy-cruiser-btn');
-    const addBattleshipBtn = document = document.getElementById('add-battleship-btn');
+    const addBattleshipBtn = document.getElementById('add-battleship-btn');
     const addBluePlanetBtn = document.getElementById('add-blue-planet-btn');
     const addRedPlanetBtn = document.getElementById('add-red-planet-btn');
     const addGoldPlanetBtn = document.getElementById('add-gold-planet-btn');
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const GAME_DATA_DOC_ID = 'conquest'; 
 
     if (logoutBtn) {
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(function(user) {
             if (user) {
                 currentUserId = user.uid;
                 fetchFactionsData();
@@ -80,27 +80,27 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        logoutBtn.addEventListener('click', () => {
-            auth.signOut().then(() => {
+        logoutBtn.addEventListener('click', function() {
+            auth.signOut().then(function() {
                 window.location.href = 'index.html';
-            }).catch((error) => {
+            }).catch(function(error) {
                 console.error("Logout failed:", error);
             });
         });
         
-        const fetchFactionsData = async () => {
+        const fetchFactionsData = async function() {
             try {
                 const factionsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').get();
-                factionsSnapshot.forEach(doc => {
+                factionsSnapshot.forEach(function(doc) {
                     factionsData[doc.id] = doc.data();
                 });
                 console.log("Factions data fetched successfully.");
-            } catch (error) => {
+            } catch (error) {
                 console.error("Error fetching factions data:", error);
             }
         };
 
-        const addNewLocation = async (name, type) => {
+        const addNewLocation = async function(name, type) {
             if (!currentUserId) return;
             try {
                 await db.collection('rosters').doc(currentUserId).collection(type + 's').add({
@@ -108,17 +108,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     type: type,
                 });
                 console.log(`New ${type} added: ${name}.`);
-            } catch (error) => {
+            } catch (error) {
                 console.error("Error adding location:", error);
             }
         };
 
-        const deleteLocation = async (locationId, locationType) => {
+        const deleteLocation = async function(locationId, locationType) {
             if (!currentUserId) return;
             try {
                 const unitsSnapshot = await db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('units').get();
                 const deletePromises = [];
-                unitsSnapshot.forEach(unitDoc => {
+                unitsSnapshot.forEach(function(unitDoc) {
                     deletePromises.push(unitDoc.ref.delete());
                 });
                 await Promise.all(deletePromises);
@@ -126,12 +126,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 await db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).delete();
                 locationDetails.innerHTML = `<p class="placeholder-text">Select a ship or planet to view its details.</p>`;
                 console.log("Location and its units deleted successfully.");
-            } catch (error) => {
+            } catch (error) {
                 console.error("Error deleting location:", error);
             }
         };
 
-        const moveToFallen = async (unitRef, locationId, locationType) => {
+        const moveToFallen = async function(unitRef, locationId, locationType) {
             const unitDoc = await unitRef.get();
             if (!unitDoc.exists) return;
             const unitData = unitDoc.data();
@@ -141,16 +141,16 @@ document.addEventListener('DOMContentLoaded', function() {
             await unitRef.delete();
         };
 
-        const deleteFallenUnit = async (fallenRef) => {
+        const deleteFallenUnit = async function(fallenRef) {
             try {
                 await fallenRef.delete();
                 console.log("Fallen unit deleted successfully.");
-            } catch (error) => {
+            } catch (error) {
                 console.error("Error deleting fallen unit:", error);
             }
         };
 
-        const renderLocationTabs = (doc, list) => {
+        const renderLocationTabs = function(doc, list) {
             const location = doc.data();
             const li = document.createElement('li');
             li.className = 'locations-container';
@@ -159,8 +159,8 @@ document.addEventListener('DOMContentLoaded', function() {
             li.textContent = location.name;
             list.appendChild(li);
 
-            li.addEventListener('click', () => {
-                document.querySelectorAll('.locations-container').forEach(tab => {
+            li.addEventListener('click', function() {
+                document.querySelectorAll('.locations-container').forEach(function(tab) {
                     tab.classList.remove('active');
                 });
                 li.classList.add('active');
@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         };
 
-        const renderLocationDetails = (doc) => {
+        const renderLocationDetails = function(doc) {
             const location = doc.data();
             const locationId = doc.id;
             const locationType = location.type + 's';
@@ -193,12 +193,12 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
 
             const nameInput = locationDetails.querySelector('.location-name-input');
-            nameInput.addEventListener('change', async (e) => {
+            nameInput.addEventListener('change', async function(e) {
                 await db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).update({ name: e.target.value });
             });
 
             const deleteBtn = locationDetails.querySelector('.delete-loc-btn');
-            deleteBtn.addEventListener('click', () => {
+            deleteBtn.addEventListener('click', function() {
                 deleteLocation(locationId, location.type);
             });
             
@@ -216,12 +216,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 factionSelect.appendChild(option);
             }
             
-            // Fix: Manually trigger the change event to populate the other dropdowns
             if (factionSelect.value) {
                 factionSelect.dispatchEvent(new Event('change'));
             }
 
-            factionSelect.addEventListener('change', async (e) => {
+            factionSelect.addEventListener('change', async function(e) {
                 const selectedFactionId = e.target.value;
                 if (!selectedFactionId) {
                     detachmentSelect.disabled = true;
@@ -232,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 const detachmentsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(selectedFactionId).collection('detachments').get();
                 detachmentSelect.innerHTML = '<option value="">-- Choose Detachment --</option>';
-                detachmentsSnapshot.forEach(doc => {
+                detachmentsSnapshot.forEach(function(doc) {
                     const option = document.createElement('option');
                     option.value = doc.id;
                     option.textContent = doc.data().name;
@@ -241,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 detachmentSelect.disabled = false;
             });
 
-            detachmentSelect.addEventListener('change', async (e) => {
+            detachmentSelect.addEventListener('change', async function(e) {
                 const selectedDetachmentId = e.target.value;
                 if (!selectedDetachmentId) {
                     unitSelect.disabled = true;
@@ -252,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const factionId = detachmentDoc.data().factionId;
                 const unitsSnapshot = await db.collection('gameData').doc(GAME_DATA_DOC_ID).collection('factions').doc(factionId).collection('units').get();
                 unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
-                unitsSnapshot.forEach(unitDoc => {
+                unitsSnapshot.forEach(function(unitDoc) {
                     const option = document.createElement('option');
                     option.value = unitDoc.id;
                     option.textContent = unitDoc.data().name;
@@ -261,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 unitSelect.disabled = false;
             });
 
-            addUnitForm.addEventListener('submit', async (e) => {
+            addUnitForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 if (!unitSelect.value) return;
                 await db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').add({
@@ -270,22 +269,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
 
-            db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').onSnapshot(snapshot => {
+            db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').onSnapshot(function(snapshot) {
                 unitList.innerHTML = '';
-                snapshot.forEach(unitDoc => {
+                snapshot.forEach(function(unitDoc) {
                     renderUnit(unitDoc, unitList, locationType, locationId);
                 });
             });
 
-            db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').onSnapshot(snapshot => {
+            db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('the_fallen').onSnapshot(function(snapshot) {
                 fallenList.innerHTML = '';
-                snapshot.forEach(fallenDoc => {
+                snapshot.forEach(function(fallenDoc) {
                     renderFallenUnit(fallenDoc, fallenList, locationType, locationId);
                 });
             });
         };
         
-        const renderUnit = (doc, parentList, locationType, locationId) => {
+        const renderUnit = function(doc, parentList, locationType, locationId) {
             const unit = doc.data();
             const li = document.createElement('li');
             li.className = 'unit-item';
@@ -301,13 +300,13 @@ document.addEventListener('DOMContentLoaded', function() {
             parentList.appendChild(li);
 
             const moveToFallenBtn = li.querySelector('.move-to-fallen-btn');
-            moveToFallenBtn.addEventListener('click', () => {
+            moveToFallenBtn.addEventListener('click', function() {
                 const unitRef = db.collection('rosters').doc(currentUserId).collection(locationType).doc(locationId).collection('units').doc(doc.id);
                 moveToFallen(unitRef, locationId, locationType);
             });
         };
 
-        const renderFallenUnit = (doc, parentList, locationType, locationId) => {
+        const renderFallenUnit = function(doc, parentList, locationType, locationId) {
             const unit = doc.data();
             const li = document.createElement('li');
             li.className = 'fallen-item';
@@ -319,35 +318,39 @@ document.addEventListener('DOMContentLoaded', function() {
             parentList.appendChild(li);
 
             const deleteFallenBtn = li.querySelector('.delete-fallen-btn');
-            deleteFallenBtn.addEventListener('click', () => {
+            deleteFallenBtn.addEventListener('click', function() {
                 const fallenRef = db.collection('rosters').doc(currentUserId).collection(locationType + 's').doc(locationId).collection('the_fallen').doc(doc.id);
                 deleteFallenUnit(fallenRef);
             });
         };
 
-        const setupRosterListener = () => {
+        const setupRosterListener = function() {
             if (!currentUserId) return;
             
-            db.collection('rosters').doc(currentUserId).collection('ships').onSnapshot(snapshot => {
+            db.collection('rosters').doc(currentUserId).collection('ships').onSnapshot(function(snapshot) {
                 shipsList.innerHTML = '';
-                snapshot.forEach(doc => renderLocationTabs(doc, shipsList));
+                snapshot.forEach(function(doc) {
+                    renderLocationTabs(doc, shipsList);
+                });
             });
-            db.collection('rosters').doc(currentUserId).collection('planets').onSnapshot(snapshot => {
+            db.collection('rosters').doc(currentUserId).collection('planets').onSnapshot(function(snapshot) {
                 planetsList.innerHTML = '';
-                snapshot.forEach(doc => renderLocationTabs(doc, planetsList));
+                snapshot.forEach(function(doc) {
+                    renderLocationTabs(doc, planetsList);
+                });
             });
         };
 
-        addCruiserBtn.addEventListener('click', () => addNewLocation('Cruiser', 'ship'));
-        addHeavyCruiserBtn.addEventListener('click', () => addNewLocation('Heavy Cruiser', 'ship'));
-        addBattleshipBtn.addEventListener('click', () => addNewLocation('Battleship', 'ship'));
-        addBluePlanetBtn.addEventListener('click', () => addNewLocation('Blue Planet', 'planet'));
-        addRedPlanetBtn.addEventListener('click', () => addNewLocation('Red Planet', 'planet'));
-        addGoldPlanetBtn.addEventListener('click', () => addNewLocation('Gold Planet', 'planet'));
+        addCruiserBtn.addEventListener('click', function() { addNewLocation('Cruiser', 'ship'); });
+        addHeavyCruiserBtn.addEventListener('click', function() { addNewLocation('Heavy Cruiser', 'ship'); });
+        addBattleshipBtn.addEventListener('click', function() { addNewLocation('Battleship', 'ship'); });
+        addBluePlanetBtn.addEventListener('click', function() { addNewLocation('Blue Planet', 'planet'); });
+        addRedPlanetBtn.addEventListener('click', function() { addNewLocation('Red Planet', 'planet'); });
+        addGoldPlanetBtn.addEventListener('click', function() { addNewLocation('Gold Planet', 'planet'); });
 
         let draggedUnit = null;
 
-        document.addEventListener('dragstart', (e) => {
+        document.addEventListener('dragstart', function(e) {
             if (e.target.classList.contains('unit-item')) {
                 draggedUnit = e.target;
                 e.dataTransfer.setData('text/plain', draggedUnit.dataset.unitId);
@@ -355,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        document.addEventListener('dragover', (e) => {
+        document.addEventListener('dragover', function(e) {
             const targetList = e.target.closest('.unit-list');
             if (targetList && !targetList.closest('.fallen-log')) {
                 e.preventDefault();
@@ -363,14 +366,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        document.addEventListener('dragleave', (e) => {
+        document.addEventListener('dragleave', function(e) {
             const targetList = e.target.closest('.unit-list');
             if (targetList) {
                 targetList.classList.remove('drag-over');
             }
         });
 
-        document.addEventListener('drop', async (e) => {
+        document.addEventListener('drop', async function(e) {
             e.preventDefault();
             const dropTarget = e.target.closest('.unit-list');
             
@@ -390,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         await db.collection('rosters').doc(currentUserId).collection(newLocationType).doc(newLocationId).collection('units').add(unitData);
                         await db.collection('rosters').doc(currentUserId).collection(currentLocType).doc(currentLocId).collection('units').doc(unitId).delete();
-                    } catch (error) => {
+                    } catch (error) {
                         console.error("Error moving unit:", error);
                     }
                 }
