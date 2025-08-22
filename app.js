@@ -68,7 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const detachmentSelect = document.getElementById('detachment-select');
     const unitSelect = document.getElementById('unit-select');
     const addUnitForm = document.getElementById('add-unit-form');
-    
 
     let currentUserId = null;
     let factionsData = {};
@@ -100,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     factionsData[doc.id] = doc.data();
                 });
                 console.log("Factions data fetched successfully.");
-
+                
                 // Populate the global faction dropdown on load
                 factionSelect.innerHTML = '<option value="">-- Choose a Faction --</option>';
                 for (const factionId in factionsData) {
